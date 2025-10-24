@@ -196,21 +196,23 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 20px 10px;
   /* Crucial: Prevent scrolling inside the overlay itself */
   overflow-y: auto; 
 }
 
 .warning-card {
-  /* Use a consistent, solid dark background for better contrast */
+  /* Ensure width calculation includes padding and border */
+  box-sizing: border-box; 
+  
   background: #0a0f1f; 
-  /* Add a very strong, distinct border and glow */
   border: 2px solid var(--accent); 
   border-radius: 20px;
-  padding: 35px 20px; /* Reduced horizontal padding slightly */
-  max-width: 450px;
-  width: 90%; /* CRITICAL FIX: Ensure it is 90% or less to prevent edge clipping */
-  /* Stronger glow for a clearer edge */
+  padding: 35px 20px; 
+  /* CRITICAL: Reduce max-width and percentage width slightly */
+  max-width: 420px; 
+  width: 88%; /* Ensure enough buffer space for the glow */
+  
   box-shadow: 0 0 50px rgba(0, 170, 255, 0.8), inset 0 0 10px rgba(0, 170, 255, 0.4); 
   text-align: center;
   margin: auto; 
