@@ -182,6 +182,17 @@
       color: #aaa;
     }
 
+    /* Add this to your <style> block, ideally near the overlay CSS */
+.overlay-footer {
+    /* Target the footer specifically inside the overlay */
+    background: transparent !important; /* Remove any background */
+    padding: 10px 0 !important; /* Minimal padding */
+    font-size: 0.8rem !important; /* Smaller text */
+    color: #99aacc !important; /* Slightly lighter color */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Subtle separator line */
+    margin-top: 15px;
+    }
+
     /* 🚫 DEVICE WARNING OVERLAY STYLES 🚫 */
 #mobileWarningOverlay {
   position: fixed;
@@ -358,7 +369,16 @@ body.no-scroll {
        </p>
      </div>
     
-      <button id="continueAnywayBtn" class="login-btn">Continue Anyway →</button>
+      <div class="warning-card">
+        <div class="warning-header">
+        </div>
+      <button id="continueAnywayBtn" class="login-btn" style="margin-bottom: 20px;">Continue Anyway →</button> 
+    
+      <footer class="overlay-footer">
+        © 2025 LearnComputers | Designed with 💙 by Amphion
+      </footer>
+
+     </div>
    </div>
  </div>
 
