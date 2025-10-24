@@ -207,13 +207,13 @@
   /* Add a very strong, distinct border and glow */
   border: 2px solid var(--accent); 
   border-radius: 20px;
-  padding: 35px 25px; /* Slightly more vertical padding */
+  padding: 35px 20px; /* Reduced horizontal padding slightly */
   max-width: 450px;
-  width: 95%; /* Use slightly more width on mobile */
+  width: 90%; /* CRITICAL FIX: Ensure it is 90% or less to prevent edge clipping */
   /* Stronger glow for a clearer edge */
   box-shadow: 0 0 50px rgba(0, 170, 255, 0.8), inset 0 0 10px rgba(0, 170, 255, 0.4); 
   text-align: center;
-  margin: auto; /* Center card if content makes overlay scroll */
+  margin: auto; 
 }
 
 .warning-header {
@@ -365,43 +365,42 @@ body.no-scroll {
   </footer>
 
   <script>
-  function setupDeviceWarning() {
+   function setupDeviceWarning() {
     const overlay = document.getElementById('mobileWarningOverlay');
     const continueBtn = document.getElementById('continueAnywayBtn');
     
     if (!overlay) return; // Exit if the HTML structure is missing
 
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    let isMobile = false;
-    const mobileBreakpoint = 800; // Define your breakpoint
+    const mobileBreakpoint = 800; 
 
-    // Check for common mobile OS/devices or small screen size
+    // Determine if the device is mobile or the screen is small
     const isSmartphone = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
     const isSmallScreen = window.innerWidth < mobileBreakpoint;
     
-    // Show warning if it's a known mobile device OR screen is small and warning hasn't been dismissed
-    if ((isSmartphone || isSmallScreen) && sessionStorage.getItem('mobileWarningDismissed') !== 'true') {
-      isMobile = true;
-    }
+    // IMPORTANT: Check if the user is currently using the desktop site (UA changes when enabled)
+    // Note: This check is not 100% reliable across all browsers, but is the best standard attempt.
+    const isDesktopUserAgent = /macintosh|windows/i.test(userAgent) && !/mobile/i.test(userAgent);
+    
+    let showWarning = (isSmartphone || isSmallScreen) && !isDesktopUserAgent;
 
-    if (isMobile) {
+    if (showWarning) {
       // 1. SHOW THE OVERLAY AND BLOCK SCROLLING
       overlay.style.display = 'flex';
-      // *** FIX: Apply a class to the body to globally prevent scrolling ***
+      // Apply a class to the body to globally prevent scrolling
       document.body.classList.add('no-scroll');
       
       // 2. Handle the 'Continue Anyway' button click
       continueBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
-        // *** FIX: Remove the class to restore scrolling ***
+        // Remove the class to restore scrolling
         document.body.classList.remove('no-scroll'); 
         
-        // Set flag for persistence
-        sessionStorage.setItem('mobileWarningDismissed', 'true');
+        // *** IMPORTANT FIX: NO sessionStorage LINE HERE. WARNING WILL REAPPEAR ON REFRESH. ***
       });
       
     } else {
-      // 3. For PC users or dismissed sessions: ensure everything is hidden/normal
+      // 3. For PC users or users who manually enabled desktop mode: ensure everything is hidden/normal
       overlay.style.display = 'none';
       document.body.classList.remove('no-scroll'); 
     }
@@ -410,7 +409,7 @@ body.no-scroll {
   // Run the detection when the page loads
   document.addEventListener('DOMContentLoaded', setupDeviceWarning);
   
-  // Re-check state on resize 
+  // Re-check state on resize
   window.addEventListener('resize', setupDeviceWarning);
   </script>
 </body>
