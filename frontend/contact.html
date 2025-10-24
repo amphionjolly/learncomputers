@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact | LearnComputers</title>
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+      --glow: 0 0 20px rgba(0, 170, 255, 0.4);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* 🌐 NAVIGATION — identical to homepage */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+    }
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
+    }
+    #darkModeToggle {
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* 📬 CONTACT SECTION */
+    .contact-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 150px 20px 80px;
+      gap: 40px;
+    }
+
+    .contact-card {
+      background: var(--card-bg);
+      padding: 35px;
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      width: 100%;
+      max-width: 600px;
+      box-shadow: var(--glow);
+    }
+
+    .contact-card h2 {
+      color: var(--accent);
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+      text-shadow: 0 0 20px rgba(0,170,255,0.4);
+    }
+
+    .contact-info p {
+      color: #b0c4de;
+      line-height: 1.6;
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+
+    .contact-info a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    .contact-form form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+    }
+
+    .contact-form button {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+    }
+    .contact-form button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0,170,255,0.8);
+    }
+
+    /* ⚡ FOOTER */
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: rgba(10,15,25,0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+
+  <!-- ✅ SweetAlert Library CDN Link -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body>
+  <!-- 🔝 PERFECT TOP NAV (unchanged) -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <!-- 💬 CONTACT CONTENT -->
+  <section class="contact-section">
+    <div class="contact-card contact-info">
+      <h2>📩 Get in Touch</h2>
+      <p><strong>Email:</strong> support@learncomputers.com</p>
+      <p><strong>Phone:</strong> +91 98765 43210</p>
+      <p><strong>Office:</strong> Tech Park, Thrissur, Kerala</p>
+      <p>We’re always here to guide you in your learning journey.  
+      Have questions? Drop us a message below or visit our <a href="community.html">Community</a>.</p>
+    </div>
+
+    <div class="contact-card contact-form">
+      <h2>💬 Send a Message</h2>
+      <form id="contactForm">
+        <input type="text" id="name" placeholder="Your Name" required>
+        <input type="email" id="email" placeholder="Your Email" required>
+        <textarea id="message" rows="6" placeholder="Write your message..." required></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <footer>© 2025 LearnComputers. All rights reserved.</footer>
+
+   <!-- ✅ SweetAlert Script -->
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      Swal.fire({
+        title: "✅ Message Sent!",
+        text: "Thank you for reaching out. We'll reply as soon as possible.",
+        icon: "success",
+        confirmButtonColor: "#4f8cff"
+      });
+      e.target.reset();
+    });
+  </script>
+
+</body>
+</html>

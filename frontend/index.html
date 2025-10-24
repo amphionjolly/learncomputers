@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Computers | Next-Gen AI Learning</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="darkmode.js"></script>
+
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    /* 🌐 NAVIGATION */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+    }
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
+    }
+    #darkModeToggle {
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* 🎯 HERO SECTION */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 140px 20px 60px;
+      color: white;
+      background: radial-gradient(circle at 20% 30%, #1a2849, #060a14);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 30px rgba(0,170,255,0.6);
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: #b0c4de;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .hero a.btn {
+      margin-top: 35px;
+      padding: 14px 35px;
+      background: var(--accent);
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: var(--glow);
+      transition: 0.3s;
+    }
+    .hero a.btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(0,170,255,0.9);
+    }
+
+    /* 🚀 FEATURES */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 40px;
+      padding: 80px 10%;
+      background: linear-gradient(180deg, #0a0f1f, #121a30);
+    }
+    .feature-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: var(--glow);
+      transition: all 0.4s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 35px rgba(0,170,255,0.7);
+    }
+    .feature-card img {
+      height: 70px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+    .feature-card h3 {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      color: #b0c4de;
+      font-size: 0.95rem;
+    }
+
+    /* ⚡ FOOTER */
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: rgba(10, 15, 25, 0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Learn. Build. Dominate.</h1>
+    <p>Level up your skills in Programming, AI, and Cybersecurity through interactive modules and an intelligent learning assistant.</p>
+    <a href="learning.html" class="btn">Start Learning Now →</a>
+  </section>
+
+  <section class="features">
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="">
+      <h3>AI-Powered Courses</h3>
+      <p>Guided AI lessons that adjust to your skill level for maximum learning efficiency.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/hacker.png" alt="">
+      <h3>Cybersecurity Practice</h3>
+      <p>Defend systems, crack simulations, and understand how hackers think — safely.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/source-code.png" alt="">
+      <h3>Programming Mastery</h3>
+      <p>Complete structured coding tracks with real project experience and gamified rewards.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/conference-call.png" alt="">
+      <h3>Collaborative Community</h3>
+      <p>Join thousands of learners, share insights, and grow together in the global tech arena.</p>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 LearnComputers | Designed with 💙 by Amphion
+  </footer>
+</body>
+</html>

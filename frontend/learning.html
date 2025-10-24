@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learning Paths | Learn Computers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="darkmode.js"></script>
+
+  <style>
+    :root {
+      --accent: #00aaff;
+      --text: #fff;
+      --bg: #0a0f1f;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+    }
+    nav .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .login-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .login-btn:hover { transform: scale(1.05); }
+
+    /* 📘 MAIN SECTION */
+    .learning-container {
+      margin-top: 120px;
+      padding: 60px 10%;
+      text-align: center;
+    }
+    .learning-container h1 {
+      font-size: 3rem;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(0,170,255,0.5);
+      margin-bottom: 40px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 35px;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 25px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.15);
+      transition: all 0.35s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 40px rgba(0, 170, 255, 0.6);
+    }
+    .card h3 {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .card p {
+      color: #b0c4de;
+      font-size: 0.95rem;
+      flex-grow: 1;
+    }
+    footer {
+      text-align: center;
+      padding: 25px;
+      margin-top: 70px;
+      background: rgba(10,15,25,0.8);
+      backdrop-filter: blur(10px);
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 🌐 NAVIGATION -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html" class="active">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <a href="login.html" class="login-btn">Login</a>
+  </nav>
+
+  <!-- 📚 LEARNING PATHS -->
+  <section class="learning-container">
+    <h1>Choose Your Learning Path</h1>
+    <div class="grid">
+      <a href="learning/programming.html" class="card">
+        <h3>Programming</h3>
+        <p>Learn C, C++, Java, Python, and modern programming languages with real examples.</p>
+      </a>
+      <a href="learning/ai.html" class="card">
+        <h3>Artificial Intelligence</h3>
+        <p>Dive into machine learning, deep learning, and generative AI with practical projects.</p>
+      </a>
+      <a href="learning/cybersecurity.html" class="card">
+        <h3>Cybersecurity</h3>
+        <p>Master ethical hacking, network defense, and real-world security challenges.</p>
+      </a>
+      <a href="learning/hardware.html" class="card">
+        <h3>Computer Hardware</h3>
+        <p>Understand CPUs, GPUs, and how computer systems are built and optimized.</p>
+      </a>
+      <a href="learning/webdev.html" class="card">
+        <h3>Web Development</h3>
+        <p>Learn to design and build websites using HTML, CSS, JavaScript, React, and Node.js.</p>
+      </a>
+      <a href="learning/networking.html" class="card">
+        <h3>Networking</h3>
+        <p>Study IP, routers, firewalls, and advanced networking concepts for IT pros.</p>
+      </a>
+      <a href="learning/os.html" class="card">
+        <h3>Operating Systems</h3>
+        <p>Explore how Windows, Linux, and macOS work internally with system-level examples.</p>
+      </a>
+      <a href="learning/database.html" class="card">
+        <h3>Databases</h3>
+        <p>Learn MySQL, MongoDB, and how to manage and query data efficiently.</p>
+      </a>
+      <a href="learning/cloud.html" class="card">
+        <h3>Cloud Computing</h3>
+        <p>Work with AWS, Azure, and Google Cloud platforms to deploy scalable apps.</p>
+      </a>
+      <a href="learning/devops.html" class="card">
+        <h3>DevOps</h3>
+        <p>Learn CI/CD pipelines, Docker, Kubernetes, and automate everything!</p>
+      </a>
+      <a href="learning/troubleshooting.html" class="card">
+        <h3>PC Troubleshooting</h3>
+        <p>Fix computer issues, diagnose hardware failures, and optimize performance.</p>
+      </a>
+      <a href="learning/software.html" class="card">
+        <h3>Software Engineering</h3>
+        <p>Understand SDLC, Agile, and how to design scalable software systems.</p>
+      </a>
+      <a href="learning/robotics.html" class="card">
+        <h3>Robotics</h3>
+        <p>Build and program real robots using sensors, AI, and embedded systems.</p>
+      </a>
+      <a href="learning/data.html" class="card">
+        <h3>Data Science</h3>
+        <p>Analyze and visualize data using Python, Pandas, Matplotlib, and TensorFlow.</p>
+      </a>
+      <a href="learning/appdev.html" class="card">
+        <h3>App Development</h3>
+        <p>Build Android and iOS apps using Flutter, Kotlin, and React Native.</p>
+      </a>
+      <a href="learning/iot.html" class="card">
+        <h3>Internet of Things (IoT)</h3>
+        <p>Connect sensors, devices, and networks with Arduino and Raspberry Pi.</p>
+      </a>
+      <a href="learning/aiethics.html" class="card">
+        <h3>AI Ethics</h3>
+        <p>Learn about safe, ethical, and responsible artificial intelligence practices.</p>
+      </a>
+      <a href="learning/math.html" class="card">
+        <h3>Math for Computing</h3>
+        <p>Cover logic, algebra, statistics, and calculus essential for programming and AI.</p>
+      </a>
+      <a href="learning/history.html" class="card">
+        <h3>History of Computers</h3>
+        <p>Explore the evolution of computers from early machines to modern AI systems.</p>
+      </a>
+      <a href="learning/career.html" class="card">
+        <h3>Career & Certifications</h3>
+        <p>Plan your career, earn IT certifications, and land your dream tech job.</p>
+      </a>
+    </div>
+  </section>
+
+  <footer>
+    © 2025 LearnComputers | Explore. Learn. Create.
+  </footer>
+</body>
+</html>

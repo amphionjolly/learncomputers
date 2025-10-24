@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resources Admin | LearnComputers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{ --bg:#071023; --accent:#00aaff; --card:#0f1724; --muted:#bfcbe3; }
+    body{ margin:0; font-family:'Inter',system-ui; background:linear-gradient(180deg,#061022,#071023); color:#eaf6ff; padding:28px; }
+    .wrap{ max-width:1100px; margin:0 auto; }
+    h1{ color:var(--accent); }
+    .controls{ display:flex; gap:8px; margin:12px 0 18px; align-items:center; }
+    select, input, button, textarea{ padding:8px 10px; border-radius:8px; border:none; background:#0b1622; color:#eaf6ff; }
+    .grid{ display:grid; grid-template-columns: 1fr 340px; gap:20px; align-items:start; }
+    .panel{ background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; }
+    .list{ max-height:62vh; overflow:auto; }
+    .topic-row{ display:flex; justify-content:space-between; gap:8px; padding:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
+    .btn{ background:var(--accent); color:#042; padding:8px 10px; border-radius:8px; font-weight:800; cursor:pointer; }
+    .muted{ color:var(--muted); font-size:0.95rem; }
+    label{ display:block; margin:8px 0 6px; font-weight:700; }
+    .small{ font-size:0.92rem; color:#b9dffb; }
+    .danger{ background:#c33; color:#fff; padding:6px 8px; border-radius:6px; cursor:pointer; }
+    .ok{ background:#22a; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Resources — Admin</h1>
+    <p class="muted">Only use this page if you're an admin. Changes are stored locally and can be exported as JSON.</p>
+
+    <div class="controls">
+      <button id="btnLoad" class="btn">Load dataset</button>
+      <button id="btnExport" class="btn">Export JSON</button>
+      <button id="btnResetLocal" class="danger">Reset Local Edits</button>
+      <span style="margin-left:12px;" class="muted">When editing complete: export → replace resources.json on server.</span>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+          <label style="margin:0">Topics</label>
+          <input id="newTopicName" placeholder="New topic name" />
+          <button id="btnAddTopic" class="btn">Add Topic</button>
+        </div>
+
+        <div class="list" id="topicsList"></div>
+      </div>
+
+      <div class="panel">
+        <div id="editorArea">
+          <label>Selected Topic</label>
+          <div id="selTopic" class="small muted">— none —</div>
+
+          <label>Resource Title</label>
+          <input id="resTitle" placeholder="Resource title" />
+
+          <label>Resource Type</label>
+          <input id="resType" placeholder="Docs / Video / Lab / Playlist / Tool / Article" />
+
+          <label>Link</label>
+          <input id="resLink" placeholder="https://..." />
+
+          <label>Description</label>
+          <textarea id="resDesc" rows="5" style="width:100%;"></textarea>
+
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button id="btnAddRes" class="btn ok">Add Resource</button>
+            <button id="btnUpdateRes" class="btn">Update Resource</button>
+            <button id="btnDeleteRes" class="danger" id="del">Delete</button>
+          </div>
+
+          <hr style="margin:12px 0; opacity:0.06" />
+          <div class="muted small">Resource list for the selected topic:</div>
+          <div id="resourcesList" style="max-height:36vh; overflow:auto; margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+(function(){
+  // Topics list constant used in front-end resources page
+  const DEFAULT_TOPICS = [
+    "Programming & Coding","AI & Machine Learning","Cybersecurity & Hacking","Web Development","Computer Hardware",
+    "Networking & Infrastructure","Operating Systems","Databases & Storage","DevOps & CI/CD","Mobile & App Development",
+    "Data Science & Analytics","Robotics & Embedded Systems","AI Ethics & Society","Career & Certifications",
+    "Software Engineering Practices","Cloud Computing","Testing & QA","Privacy & Compliance","IoT & Edge Computing","Other"
+  ];
+
+  // Elements
+  const btnLoad = document.getElementById('btnLoad');
+  const btnExport = document.getElementById('btnExport');
+  const btnResetLocal = document.getElementById('btnResetLocal');
+  const topicsList = document.getElementById('topicsList');
+  const resourcesList = document.getElementById('resourcesList');
+  const newTopicName = document.getElementById('newTopicName');
+  const btnAddTopic = document.getElementById('btnAddTopic');
+  const selTopic = document.getElementById('selTopic');
+
+  const resTitle = document.getElementById('resTitle');
+  const resType = document.getElementById('resType');
+  const resLink = document.getElementById('resLink');
+  const resDesc = document.getElementById('resDesc');
+  const btnAddRes = document.getElementById('btnAddRes');
+  const btnUpdateRes = document.getElementById('btnUpdateRes');
+  const btnDeleteRes = document.querySelector('#btnDeleteRes');
+
+  let DATA = {}; // dataset object
+  let currentTopic = null;
+  let currentEditIndex = null;
+
+  // Load dataset: try resources.json then localStorage fallback
+  async function loadDataset(){
+    try {
+      const r = await fetch('./resources.json', {cache:'no-store'});
+      if(!r.ok) throw new Error('no json');
+      const json = await r.json();
+      DATA = json;
+      // ensure all default topics present
+      DEFAULT_TOPICS.forEach(t => { if(!Array.isArray(DATA[t])) DATA[t] = []; });
+      // store in localStorage for admin edits
+      localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+      renderTopics();
+      alert('Loaded resources.json successfully (and saved a copy to localStorage).');
+    } catch(e){
+      // fallback to using the generated dataset stored in main page localStorage, or create empty
+      const stored = localStorage.getItem('lc_resources_data');
+      if(stored){
+        DATA = JSON.parse(stored);
+        alert('Loaded dataset from localStorage (previously generated).');
+      } else {
+        // initialize with empty arrays
+        DATA = {};
+        DEFAULT_TOPICS.forEach(t => DATA[t] = []);
+        localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+        alert('No resources.json found; initialized empty dataset. Use "Add Topic" / "Add Resource" to populate, or open resources.html to generate fallback placeholders first.');
+      }
+      renderTopics();
+    }
+  }
+
+  function renderTopics(){
+    topicsList.innerHTML = '';
+    Object.keys(DATA).forEach(t => {
+      const count = Array.isArray(DATA[t]) ? DATA[t].length : 0;
+      const row = document.createElement('div');
+      row.className = 'topic-row';
+      row.innerHTML = `<div><strong>${t}</strong> <span class="muted">(${count})</span></div>
+        <div style="display:flex; gap:6px;">
+          <button class="small-btn" data-topic="${t}" title="Select">Select</button>
+          <button class="small-btn-del" data-topic="${t}" title="Delete">Delete</button>
+        </div>`;
+      topicsList.appendChild(row);
+
+      row.querySelector('.small-btn').addEventListener('click', () => selectTopic(t));
+      row.querySelector('.small-btn-del').addEventListener('click', () => {
+        if(!confirm('Delete topic "'+t+'" and all its resources? This cannot be undone.')) return;
+        delete DATA[t];
+        // update
+        localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+        renderTopics();
+      });
+    });
+  }
+
+  function selectTopic(topic){
+    currentTopic = topic;
+    selTopic.textContent = topic;
+    renderResourcesForTopic(topic);
+  }
+
+  function renderResourcesForTopic(topic){
+    resourcesList.innerHTML = '';
+    const arr = Array.isArray(DATA[topic]) ? DATA[topic] : [];
+    arr.forEach((r, idx) => {
+      const div = document.createElement('div');
+      div.style.borderBottom = '1px solid rgba(255,255,255,0.03)';
+      div.style.padding = '8px';
+      div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
+        <div><strong>${r.title}</strong><div class="muted small">${r.type} • ${r.link}</div></div>
+        <div style="display:flex; gap:8px;">
+          <button class="edit" data-idx="${idx}">Edit</button>
+          <button class="del" data-idx="${idx}">Delete</button>
+        </div>
+      </div>`;
+      resourcesList.appendChild(div);
+
+      div.querySelector('.edit').addEventListener('click', () => {
+        currentEditIndex = idx;
+        resTitle.value = r.title; resType.value = r.type; resLink.value = r.link; resDesc.value = r.desc || '';
+      });
+      div.querySelector('.del').addEventListener('click', () => {
+        if(!confirm('Delete resource "'+r.title+'"?')) return;
+        DATA[topic].splice(idx,1);
+        localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+        renderTopics(); renderResourcesForTopic(topic);
+      });
+    });
+  }
+
+  btnAddTopic.addEventListener('click', () => {
+    const name = (newTopicName.value || '').trim();
+    if(!name) { alert('Enter a topic name'); return; }
+    if(DATA[name]) { alert('Topic already exists'); return; }
+    DATA[name] = [];
+    localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+    newTopicName.value = '';
+    renderTopics();
+  });
+
+  btnAddRes.addEventListener('click', () => {
+    if(!currentTopic) { alert('Select a topic first'); return; }
+    const item = { title: resTitle.value.trim(), type: resType.value.trim() || 'Docs', link: resLink.value.trim() || '#', desc: resDesc.value.trim() };
+    if(!item.title) { alert('Title required'); return; }
+    DATA[currentTopic].push(item);
+    localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+    renderTopics(); renderResourcesForTopic(currentTopic);
+    resTitle.value = ''; resType.value=''; resLink.value=''; resDesc.value='';
+  });
+
+  btnUpdateRes.addEventListener('click', () => {
+    if(currentTopic == null || currentEditIndex == null) { alert('Select a resource to edit'); return; }
+    const arr = DATA[currentTopic];
+    arr[currentEditIndex] = { title: resTitle.value.trim(), type: resType.value.trim() || 'Docs', link: resLink.value.trim() || '#', desc: resDesc.value.trim() };
+    localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+    renderTopics(); renderResourcesForTopic(currentTopic);
+    currentEditIndex = null;
+    resTitle.value=''; resType.value=''; resLink.value=''; resDesc.value='';
+  });
+
+  btnLoad.addEventListener('click', loadDataset);
+
+  btnExport.addEventListener('click', () => {
+    const dataStr = JSON.stringify(DATA, null, 2);
+    const blob = new Blob([dataStr], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'resources-export.json';
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    alert('Exported JSON. Replace your frontend/resources.json with this file on your server to publish changes.');
+  });
+
+  btnResetLocal.addEventListener('click', () => {
+    if(!confirm('Clear local edits and stored dataset?')) return;
+    localStorage.removeItem('lc_resources_data');
+    DATA = {}; DEFAULT_TOPICS.forEach(t => DATA[t] = []);
+    renderTopics(); resourcesList.innerHTML=''; selTopic.textContent='— none —';
+    alert('Local edits cleared. You can reload resources.json or repopulate.');
+  });
+
+  // initialize UI from localStorage if possible
+  (function init(){
+    const stored = localStorage.getItem('lc_resources_data');
+    if(stored){
+      DATA = JSON.parse(stored);
+    } else {
+      // initialize empty with default topics
+      DATA = {}; DEFAULT_TOPICS.forEach(t => DATA[t] = []);
+      localStorage.setItem('lc_resources_data', JSON.stringify(DATA));
+    }
+    renderTopics();
+  })();
+
+})();
+</script>
+</body>
+</html>

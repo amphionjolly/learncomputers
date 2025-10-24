@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Computers | AI Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Note: This assumes 'styles.css' is in the same folder -->
+  <!-- <link rel="stylesheet" href="styles.css"> --> 
+  
+  <script src="darkmode.js"></script>
+
+  <!-- Copied styles from your index.html -->
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    /* 🌐 NAVIGATION */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-btn { /* Re-using your button style */
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
+    }
+    #darkModeToggle {
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ⚡ FOOTER */
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: rgba(10, 15, 25, 0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+
+  <!-- Additional styles for the chat interface -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  
+  <style>
+    /* These styles integrate the chat with your site's theme */
+    .chat-body-wrapper {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    .message-container { max-width: 100%; word-wrap: break-word; }
+    
+    /* Using your site's variables */
+    .user-message { 
+        background-color: var(--accent); 
+        color: white;
+    }
+    .bot-message { 
+        background-color: var(--card-bg); 
+        color: var(--text);
+    }
+    .citation { font-size: 0.75rem; color: #9ca3af; }
+
+    /* Scrollbar styling to match dark theme */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #1f2937; }
+    ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+    /* Code block styling */
+    .code-block-wrapper { background-color: #111827; border-radius: 0.5rem; margin: 0.75rem 0; border: 1px solid #4b5563; overflow: hidden; }
+    .code-block-header { display: flex; justify-content: space-between; align-items: center; background-color: #374151; padding: 0.5rem 0.75rem; font-size: 0.8rem; color: #d1d5db; }
+    .language-name { font-family: 'Courier New', Courier, monospace; font-weight: 600; text-transform: uppercase; }
+    .copy-button { background-color: #4b5563; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; cursor: pointer; font-size: 0.75rem; transition: background-color 0.2s; }
+    .copy-button:hover { background-color: #6b7280; }
+    .bot-message pre { margin: 0; padding: 1rem; white-space: pre-wrap; word-wrap: break-word; }
+    .bot-message code { font-family: 'Courier New', Courier, monospace; font-size: 0.875rem; }
+
+    /* Chat input area */
+    .chat-input-footer {
+        background: rgba(10, 15, 30, 0.7);
+        backdrop-filter: blur(20px);
+        padding: 1rem;
+    }
+    .chat-input-form {
+        background-color: var(--card-bg);
+    }
+    .chat-input-form input {
+        background: transparent;
+        color: var(--text);
+    }
+    .chat-input-form button {
+        background-color: var(--accent);
+    }
+    .chat-input-form button:hover {
+        opacity: 0.8;
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+<div class="chat-body-wrapper">
+  <!-- Your Site's Navigation -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html" class="active">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <!-- 
+        FIX: Added the "New Chat" button here.
+        This button is required by the JavaScript and fixes the error.
+      -->
+      <button id="newChatBtn" class="login-btn" style="background-color: #4b5563; font-size: 0.9rem;">New Chat</button>
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <!-- Chat Messages -->
+  <main id="chat-container" class="flex-1 p-4 sm:p-6 overflow-y-auto" style="padding-top: 100px;"> <!-- Added padding-top to avoid nav -->
+      <div id="chat-messages" class="space-y-4 max-w-4xl mx-auto">
+          <!-- Initial Bot Message will be injected by JS -->
+      </div>
+  </main>
+
+  <!-- User Input -->
+  <footer class="chat-input-footer p-4 sm:p-6">
+      <div class="max-w-4xl mx-auto">
+          <div id="loading-indicator" class="hidden text-center text-sm text-gray-400 mb-2">
+              <div class="flex justify-center items-center">
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  <span>Architecting solution...</span>
+              </div>
+          </div>
+           <form id="chat-form" class="chat-input-form flex items-center rounded-lg p-2">
+              <input type="text" id="user-input" placeholder="Ask an engineering or architectural question..." class="flex-1 placeholder-gray-400 border-none focus:ring-0 text-sm">
+              <button type="submit" class="text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out ml-2">
+                  <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" >
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                  </svg>
+              </button>
+          </form>
+      </div>
+  </footer>
+  
+</div> <!-- End of chat-body-wrapper -->
+
+    <script>
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatContainer = document.getElementById('chat-container');
+        // This line caused the error, but the button is now in the HTML
+        const newChatBtn = document.getElementById('newChatBtn'); 
+        const loadingIndicator = document.getElementById('loading-indicator');
+        
+        let chatHistory = [];
+
+        // --- Event Listeners ---
+        chatForm.addEventListener('submit', handleUserMessage);
+        
+        // This listener is now safe because 'newChatBtn' exists
+        newChatBtn.addEventListener('click', startNewSession);
+
+        function startNewSession() {
+            chatHistory = []; 
+            chatMessages.innerHTML = ''; 
+            addMessageToUI("Hello. I am an Architect-level AI mentor. This chat is now secured via a backend proxy. Your API key is safe. How can I help you today?", 'bot');
+            userInput.focus();
+        }
+
+        function handleUserMessage(e) {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            addMessageToUI(message, 'user');
+            userInput.value = '';
+            fetchBotResponse(message);
+        }
+        
+         function addMessageToUI(message, sender, sources = []) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `flex items-start gap-3 ${sender === 'user' ? 'justify-end' : ''}`;
+            
+            const renderedMessage = sender === 'bot' 
+                ? marked.parse(message) 
+                : `<p>${message.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+            
+            const content = `
+                ${sender === 'bot' ? `
+                <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                       <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                </div>
+                ` : ''}
+                <div class="p-3 rounded-lg shadow-lg message-container ${sender === 'user' ? 'user-message rounded-br-none' : 'bot-message rounded-tl-none'}">
+                    <div class="text-sm prose prose-invert max-w-none prose-pre:bg-transparent prose-pre:p-0">${renderedMessage}</div>
+                    ${sources.length > 0 ? `
+                        <div class="mt-2 pt-2 border-t border-gray-600">
+                            <h4 class="text-xs font-semibold mb-1 text-gray-300">Sources:</h4>
+                            <ul class="list-disc list-inside space-y-1">
+                                ${sources.map(source => `<li><a href="${source.uri}" target="_blank" rel="noopener noreferrer" class="citation hover:underline">${source.title}</a></li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+                 ${sender === 'user' ? `
+                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: var(--accent);">
+                    <svg class="w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 8a3 3 0 100-6 3 3 0 000 6zM3.465 14.493a1.23 1.23 0 00.41 1.412A9.957 9.957 0 0010 18c2.31 0 4.438-.784 6.131-2.095a1.23 1.23 0 00.41-1.412A9.99 9.99 0 0010 12c-2.31 0-4.438.784-6.131 2.095z" />
+                    </svg>
+                </div>
+                ` : ''}
+            `;
+
+            messageElement.innerHTML = content;
+            chatMessages.appendChild(messageElement);
+
+            if (sender === 'bot') {
+                const preElements = messageElement.querySelectorAll('pre');
+                preElements.forEach(pre => {
+                    const code = pre.querySelector('code');
+                    if (!code) return;
+                    hljs.highlightElement(code);
+                    const languageClass = Array.from(code.classList).find(c => c.startsWith('language-'));
+                    const languageName = languageClass ? languageClass.replace('language-', '') : 'code';
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'code-block-wrapper';
+                    const header = document.createElement('div');
+                    header.className = 'code-block-header';
+                    const langSpan = document.createElement('span');
+                    langSpan.className = 'language-name';
+                    langSpan.textContent = languageName;
+                    const copyButton = document.createElement('button');
+                    copyButton.textContent = 'Copy';
+                    copyButton.className = 'copy-button';
+                    copyButton.onclick = () => {
+                       const textarea = document.createElement('textarea');
+                       textarea.value = code.textContent;
+                       document.body.appendChild(textarea);
+                       textarea.select();
+                       try {
+                           document.execCommand('copy');
+                           copyButton.textContent = 'Copied!';
+                       } catch (err) {
+                           console.error('Failed to copy text: ', err);
+                           copyButton.textContent = 'Error';
+                       }
+                       document.body.removeChild(textarea);
+                       setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
+                    };
+                    header.appendChild(langSpan);
+                    header.appendChild(copyButton);
+                    pre.parentNode.insertBefore(wrapper, pre);
+                    wrapper.appendChild(header);
+                    wrapper.appendChild(pre);
+                });
+            }
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        async function fetchBotResponse(message) {
+            loadingIndicator.classList.remove('hidden');
+
+            const payload = {
+                message: message,
+                history: chatHistory 
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || `Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                chatHistory = result.history;
+                addMessageToUI(result.response.text, 'bot', result.response.sources);
+
+            } catch (error) {
+                console.error('Error fetching bot response:', error);
+                addMessageToUI(`A system-level error occurred: ${error.message}. Is your local server running?`, 'bot');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+
+        // Initial load
+        startNewSession();
+    </script>
+</body>
+</html>

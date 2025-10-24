@@ -1,0 +1,21 @@
+<section class="py-16 px-8">
+<h2 class="text-3xl font-bold mb-6">Your Profile</h2>
+<div class="glass-card p-6 max-w-lg mx-auto">
+<p><strong>Email:</strong> <span id="userEmail"></span></p>
+<h3 class="text-xl font-bold mt-4 mb-2">Saved Learning Progress</h3>
+<ul id="progressList" class="list-disc pl-6"></ul>
+<button onclick="logout()" class="gradient-btn mt-4 w-full">Logout</button>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+if(!token){ alert("Login first"); window.location.href="login.html"; }
+
+document.getElementById("userEmail").innerText = "Logged-in user";
+
+function logout(){
+  localStorage.removeItem("token");
+  alert("Logged out");
+  window.location.href="index.html";
+}
+</script>

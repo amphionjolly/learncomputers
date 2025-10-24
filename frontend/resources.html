@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resources | LearnComputers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* Keep top UI identical to your index.html */
+    :root{
+      --bg:#0a0f1f; --accent:#00aaff; --card-bg: rgba(255,255,255,0.06);
+      --muted:#b0c4de; --glass: rgba(10,15,30,0.65); --white-opaque: rgba(255,255,255,0.06);
+    }
+    html,body{height:100%;margin:0;font-family:'Inter',system-ui, -apple-system, "Segoe UI", Roboto, Arial;}
+    body{
+      display:flex; flex-direction:column; min-height:100vh;
+      background: radial-gradient(circle at 10% 10%, #101935, #060a14);
+      color:#eaf6ff;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* NAVBAR (same as index) */
+    nav{ position:fixed; top:0; left:0; width:100%; background: rgba(10,15,30,0.7);
+      backdrop-filter: blur(20px); display:flex; justify-content:space-between; align-items:center;
+      padding:15px 7%; z-index:1200; box-shadow: 0 0 20px rgba(0,0,0,0.45);
+    }
+    nav .logo{ font-size:1.6rem; font-weight:800; color:var(--accent); }
+    nav ul{ list-style:none; display:flex; gap:24px; margin:0; padding:0; align-items:center; }
+    nav ul li a{ color:#ccc; text-decoration:none; font-weight:600; font-size:1rem; transition:all .18s; }
+    nav ul li a.active, nav ul li a:hover{ color:var(--accent); }
+    .nav-actions{ display:flex; gap:10px; align-items:center; }
+    .login-btn{ background:var(--accent); color:#fff; padding:8px 18px; border-radius:12px; text-decoration:none; font-weight:700; box-shadow: 0 0 20px rgba(0,170,255,0.25); }
+    #darkModeToggle{ border-radius:10px; padding:6px 10px; background:none; border:2px solid var(--accent); color:var(--accent); cursor:pointer; }
+
+    /* MAIN */
+    main{ flex:1; width:100%; max-width:1200px; margin:0 auto; padding:120px 5% 48px; box-sizing:border-box; }
+
+    .page-hed { text-align:center; margin-bottom:18px; }
+    .page-hed h1{ margin:0; font-size:2.6rem; color:var(--accent); letter-spacing:0.6px; text-shadow: 0 0 20px rgba(0,170,255,0.12); }
+    .page-hed p{ margin:8px 0 0; color:var(--muted); font-size:1.05rem; }
+
+    /* Controls */
+    .controls { display:flex; gap:12px; align-items:center; justify-content:center; margin:20px 0 28px; flex-wrap:wrap; }
+    .controls .topic-filter { padding:10px 14px; border-radius:10px; border:none; font-weight:800; background:#fff; color:#000; box-shadow: 0 6px 18px rgba(0,0,0,0.35); cursor:pointer; }
+    .controls .search { display:flex; gap:8px; align-items:center; }
+    .controls input[type="search"]{ padding:10px 14px; border-radius:10px; width:520px; max-width:64vw; border:none; font-size:1rem; outline:none; background:var(--white-opaque); color:#fff; box-shadow:0 6px 18px rgba(0,0,0,0.28); }
+    .controls button.clear { padding:10px 12px; background:#222; color:#fff; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
+
+    /* Topics */
+    .topics { display:flex; flex-direction:column; gap:18px; margin-top:6px; }
+    .topic-card { background:var(--card-bg); border-radius:14px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.35); }
+    .topic-head { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.02); }
+    .topic-head .left { display:flex; gap:12px; align-items:center; }
+    .topic-title { font-size:1.15rem; font-weight:800; color:var(--accent); }
+    .topic-meta { color:var(--muted); font-weight:700; font-size:0.92rem; }
+    .topic-toggle { font-size:20px; color:#fff; }
+
+    .topic-body { max-height:0; overflow:hidden; transition:max-height 420ms cubic-bezier(.2,.9,.25,1), padding 220ms ease; padding:0 18px; }
+    .topic-body.open { padding:18px; max-height: 3200px; }
+
+    .group { margin-bottom:18px; }
+    .group-title { font-weight:800; color:#cfeaff; margin-bottom:10px; font-size:0.98rem; }
+
+    .resources-grid { display:grid; gap:12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .res-card { background: rgba(255,255,255,0.03); border-radius:10px; padding:12px; display:flex; flex-direction:column; min-height:96px; transition: transform .18s ease, box-shadow .18s ease; }
+    .res-card:hover { transform:translateY(-6px); box-shadow: 0 12px 30px rgba(0,170,255,0.12); }
+    .res-type { font-weight:800; color:#8fd3ff; font-size:0.78rem; margin-bottom:6px; }
+    .res-title { color:var(--accent); font-weight:800; font-size:0.95rem; margin-bottom:6px; }
+    .res-desc { color:#dbeeff; font-size:0.88rem; flex:1; line-height:1.25; }
+    .res-link { text-decoration:none; color:#fff; font-weight:800; margin-top:10px; align-self:flex-end; background:rgba(0,0,0,0.18); padding:7px 8px; border-radius:8px; }
+
+    footer { background: rgba(10,15,25,0.85); padding:20px 0; color:#bfcbe3; text-align:center; font-size:0.92rem; margin-top:24px; }
+
+    @media (max-width:720px){
+      .controls input[type="search"]{ width:88vw; }
+      nav ul{ display:none; }
+      .topic-head { padding:14px; }
+    }
+
+    /* small helper */
+    .muted { color:var(--muted); font-size:0.9rem; }
+
+    /* accessibility focus */
+    .topic-head:focus { outline: 3px solid rgba(0,170,255,0.14); outline-offset:2px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- NAV (unchanged) -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html" class="active">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-hed">
+      <h1>📚 LearnComputers — Resources Library</h1>
+      <p>Search, filter and open curated tutorials, docs, playlists and tools across all computing topics.</p>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls" role="region" aria-label="Search and filters">
+      <select id="topicQuickFilter" class="topic-filter" title="Quick filter by topic (visible black text)">
+        <option value="All">All Topics</option>
+      </select>
+
+      <div class="search">
+        <input id="searchBox" type="search" placeholder="Search by title, description or link..." aria-label="Search resources">
+        <button class="clear" id="clearBtn">Clear</button>
+      </div>
+    </div>
+
+    <!-- Topics container -->
+    <section id="topics" class="topics" aria-live="polite">
+      <!-- Topics will be injected dynamically from resources.json OR fallback generation -->
+    </section>
+
+    <!-- Back to Top -->
+    <button id="backToTop" aria-label="Back to top" style="position:fixed; right:24px; bottom:90px; padding:12px 14px; border-radius:12px; border:none; background:linear-gradient(135deg,var(--accent),#38e8ff); box-shadow:0 8px 30px rgba(0,170,255,0.28); cursor:pointer; display:none; z-index:1200;">↑ Top</button>
+
+  </main>
+
+  <footer>© 2025 LearnComputers | Designed with 💙 by Amphion</footer>
+
+  <!-- ================= JAVASCRIPT: loads JSON or generates fallback with 80 items per topic ================= -->
+  <script>
+  (function(){
+    // Topics we will show (20)
+    const TOPICS = [
+      "Programming & Coding",
+      "AI & Machine Learning",
+      "Cybersecurity & Hacking",
+      "Web Development",
+      "Computer Hardware",
+      "Networking & Infrastructure",
+      "Operating Systems",
+      "Databases & Storage",
+      "DevOps & CI/CD",
+      "Mobile & App Development",
+      "Data Science & Analytics",
+      "Robotics & Embedded Systems",
+      "AI Ethics & Society",
+      "Career & Certifications",
+      "Software Engineering Practices",
+      "Cloud Computing",
+      "Testing & QA",
+      "Privacy & Compliance",
+      "IoT & Edge Computing",
+      "Other"
+    ];
+
+    // Types distribution to create realistic resources when fallback used
+    const TYPE_POOL = ["Docs","Video","Tutorial","Lab","Playlist","Tool","Article","Course","Paper","Reference"];
+
+    const topicsEl = document.getElementById('topics');
+    const searchBox = document.getElementById('searchBox');
+    const clearBtn = document.getElementById('clearBtn');
+    const topicQuickFilter = document.getElementById('topicQuickFilter');
+    const backToTop = document.getElementById('backToTop');
+
+    // Util: sanitize text
+    function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // Build HTML for a topic card given resources array
+    function buildTopicCard(topicName, resources){
+      const article = document.createElement('article');
+      article.className = 'topic-card';
+      article.setAttribute('data-topic', topicName);
+
+      article.innerHTML = `
+        <div class="topic-head" tabindex="0">
+          <div class="left">
+            <div class="topic-title">${esc(topicName)}</div>
+            <div class="topic-meta">(${resources.length} resources)</div>
+          </div>
+          <div class="topic-toggle">+</div>
+        </div>
+        <div class="topic-body">
+        </div>
+      `;
+
+      // group resources by type
+      const groups = {};
+      resources.forEach(r => {
+        const t = r.type || 'Resource';
+        if(!groups[t]) groups[t] = [];
+        groups[t].push(r);
+      });
+
+      const body = article.querySelector('.topic-body');
+      // for each group produce a group section
+      Object.keys(groups).forEach(typeName => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'group';
+        groupDiv.innerHTML = `<div class="group-title"> ${esc(typeName)} </div><div class="resources-grid"></div>`;
+        const grid = groupDiv.querySelector('.resources-grid');
+
+        groups[typeName].forEach(res => {
+          const rc = document.createElement('div');
+          rc.className = 'res-card';
+          rc.innerHTML = `
+            <div class="res-type">${esc(typeName)}</div>
+            <div class="res-title">${esc(res.title)}</div>
+            <div class="res-desc">${esc(res.desc || '')}</div>
+            <a class="res-link" href="${esc(res.link || '#')}" target="_blank" rel="noopener noreferrer">Open ↗</a>
+          `;
+          grid.appendChild(rc);
+        });
+
+        body.appendChild(groupDiv);
+      });
+
+      return article;
+    }
+
+    // Fallback generator that creates N placeholder resources per topic,
+    // correctly mixing types and labels so that UI looks realistic.
+    function generateFallbackDataset(itemsPerTopic = 80){
+      const dataset = {};
+      TOPICS.forEach(topic => {
+        const resources = [];
+        // distribute types in rounds to create grouping
+        for(let i=1;i<=itemsPerTopic;i++){
+          const type = TYPE_POOL[i % TYPE_POOL.length];
+          const item = {
+            title: `${topic} — ${type} Resource ${i}`,
+            type,
+            desc: `${type} for ${topic}: concise description and quick-start examples (auto-generated placeholder).`,
+            link: `https://example.com/${encodeURIComponent(topic.replace(/\s+/g,'-').toLowerCase())}/${i}`
+          };
+          resources.push(item);
+        }
+        // ensure docs come first in array (not required but nicer)
+        resources.sort((a,b) => {
+          if(a.type === 'Docs' && b.type !== 'Docs') return -1;
+          if(b.type === 'Docs' && a.type !== 'Docs') return 1;
+          return a.title.localeCompare(b.title);
+        });
+        dataset[topic] = resources;
+      });
+      return dataset;
+    }
+
+    // Try to fetch resources.json from same directory
+    async function loadDataset(){
+      try{
+        const resp = await fetch('./resources.json', {cache: "no-store"});
+        if(!resp.ok) throw new Error('No resources.json (HTTP ' + resp.status + ')');
+        const data = await resp.json();
+        // validate that topics exist and each has an array
+        const final = {};
+        TOPICS.forEach(t => {
+          if(Array.isArray(data[t]) && data[t].length) final[t] = data[t];
+        });
+        // if none found, fallback to full generate
+        if(Object.keys(final).length === 0){
+          console.warn('resources.json present but no valid topics/arrays — falling back to generated dataset.');
+          return generateFallbackDataset(80);
+        }
+        // If some topics missing, fill them with zeros or generate placeholders
+        TOPICS.forEach(t => {
+          if(!final[t]) {
+            final[t] = data[t] && Array.isArray(data[t]) ? data[t] : generateFallbackDataset(80)[t];
+          }
+        });
+        return final;
+      }catch(err){
+        console.warn('Failed to load resources.json:', err.message);
+        // fallback generator: 80 items per topic
+        return generateFallbackDataset(80);
+      }
+    }
+
+    // Populate DOM from dataset
+    async function populate() {
+      const dataset = await loadDataset();
+
+      // store a copy in localStorage for admin usage
+      window.LC_RESOURCES_DATA = dataset;
+      try { localStorage.setItem('lc_resources_data', JSON.stringify(dataset)); } catch(e){ /* ignore */ }
+
+      // fill topic select with topics that have >0 resources
+      const topicsWithResources = Object.keys(dataset).filter(k => Array.isArray(dataset[k]) && dataset[k].length>0);
+      topicQuickFilter.innerHTML = '<option value="All">All Topics</option>';
+      topicsWithResources.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        topicQuickFilter.appendChild(opt);
+      });
+
+      // render each topic card
+      topicsEl.innerHTML = '';
+      topicsWithResources.forEach(topicName => {
+        const resources = dataset[topicName];
+        const card = buildTopicCard(topicName, resources);
+        topicsEl.appendChild(card);
+      });
+
+      // wire up accordion listeners
+      initAccordionListeners();
+    }
+
+    // Accordion toggles & keyboard
+    function initAccordionListeners(){
+      const heads = document.querySelectorAll('.topic-head');
+      heads.forEach(head => {
+        const card = head.closest('.topic-card');
+        const body = card.querySelector('.topic-body');
+        head.addEventListener('click', () => toggleCard(card, body));
+        head.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCard(card, body); }
+        });
+      });
+    }
+
+    function toggleCard(card, body){
+      const open = body.classList.contains('open');
+      if(open){
+        const startHeight = body.scrollHeight;
+        body.style.maxHeight = startHeight + 'px';
+        requestAnimationFrame(()=> {
+          body.style.transition = 'max-height 420ms cubic-bezier(.2,.9,.25,1), padding 220ms ease';
+          body.style.maxHeight = '0px';
+          body.classList.remove('open');
+          card.querySelector('.topic-toggle').textContent = '+';
+        });
+        setTimeout(()=> { body.style.maxHeight = ''; body.style.transition = ''; }, 450);
+      } else {
+        body.classList.add('open');
+        card.querySelector('.topic-toggle').textContent = '−';
+        const height = body.scrollHeight;
+        body.style.maxHeight = '0px';
+        requestAnimationFrame(()=> {
+          body.style.transition = 'max-height 420ms cubic-bezier(.2,.9,.25,1), padding 220ms ease';
+          body.style.maxHeight = height + 'px';
+        });
+        setTimeout(()=> { body.style.maxHeight = ''; body.style.transition = ''; }, 450);
+      }
+    }
+
+    // Search & filter
+    function applyFilters(){
+      const q = (searchBox.value || '').trim().toLowerCase();
+      const topicSelected = topicQuickFilter.value || 'All';
+
+      const cards = Array.from(document.querySelectorAll('.topic-card'));
+      cards.forEach(card => {
+        const topicName = card.getAttribute('data-topic');
+        if(topicSelected !== 'All' && topicName !== topicSelected){
+          card.style.display = 'none';
+          // close any open
+          const body = card.querySelector('.topic-body');
+          if(body.classList.contains('open')) toggleCard(card, body);
+          return;
+        }
+
+        // otherwise filter children resources for query
+        const resources = Array.from(card.querySelectorAll('.res-card'));
+        if(q === ''){
+          card.style.display = '';
+          resources.forEach(r => r.style.display = '');
+        } else {
+          let anyVisible = false;
+          resources.forEach(res => {
+            const title = (res.querySelector('.res-title')?.textContent || '').toLowerCase();
+            const desc = (res.querySelector('.res-desc')?.textContent || '').toLowerCase();
+            const type = (res.querySelector('.res-type')?.textContent || '').toLowerCase();
+            const matches = title.includes(q) || desc.includes(q) || type.includes(q) || topicName.toLowerCase().includes(q);
+            res.style.display = matches ? '' : 'none';
+            if(matches) anyVisible = true;
+          });
+          card.style.display = anyVisible ? '' : 'none';
+          const body = card.querySelector('.topic-body');
+          if(anyVisible){
+            if(!body.classList.contains('open')) toggleCard(card, body);
+          } else {
+            if(body.classList.contains('open')) toggleCard(card, body);
+          }
+        }
+      });
+    }
+
+    // Debounce helper
+    function debounce(fn, wait=160){
+      let t = null;
+      return function(...args){
+        if(t) clearTimeout(t);
+        t = setTimeout(()=> fn.apply(this,args), wait);
+      };
+    }
+
+    // BackToTop
+    function initBackToTop(){
+      window.addEventListener('scroll', () => {
+        backToTop.style.display = (window.scrollY > 360) ? 'block' : 'none';
+      });
+      backToTop.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+    }
+
+    // Controls wiring
+    searchBox.addEventListener('input', debounce(()=> applyFilters(), 160));
+    clearBtn.addEventListener('click', () => {
+      searchBox.value = ''; topicQuickFilter.value = 'All'; applyFilters();
+    });
+    topicQuickFilter.addEventListener('change', () => applyFilters());
+
+    // Init
+    populate().then(()=> initBackToTop());
+
+    // Expose a little API for admin page to reload dataset after edits
+    window.LC_reloadDataFromLocalStorage = function(){
+      try{
+        const stored = localStorage.getItem('lc_resources_data');
+        if(!stored) return;
+        const data = JSON.parse(stored);
+        // re-render using localStorage dataset
+        (async function renderFromData(){
+          const dataset = data;
+          // update global
+          window.LC_RESOURCES_DATA = dataset;
+          // repopulate select and DOM
+          const topicsWithResources = Object.keys(dataset).filter(k => Array.isArray(dataset[k]) && dataset[k].length>0);
+          topicQuickFilter.innerHTML = '<option value="All">All Topics</option>';
+          topicsWithResources.forEach(t => {
+            const opt = document.createElement('option'); opt.value = t; opt.textContent = t; topicQuickFilter.appendChild(opt);
+          });
+          topicsEl.innerHTML = '';
+          topicsWithResources.forEach(topicName => {
+            const resources = dataset[topicName];
+            const card = buildTopicCard(topicName, resources);
+            topicsEl.appendChild(card);
+          });
+          initAccordionListeners();
+          applyFilters();
+        })();
+      }catch(e){
+        console.error('Failed to reload from localStorage', e);
+      }
+    };
+
+  })();
+  </script>
+</body>
+</html>

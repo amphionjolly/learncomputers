@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Community | LearnComputers</title>
+
+  <!-- Same UI styling as index.html (kept inline so this page is standalone) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root{
+      --bg:#0a0f1f; --accent:#00aaff; --card-bg:rgba(255,255,255,0.08);
+      --text:#fff; --glow:0 0 20px rgba(0,170,255,0.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--text);
+      background:radial-gradient(circle at top left,#101935,#060a14);overflow-x:hidden;}
+
+    /* ---------------- NAV (identical to index.html) ---------------- */
+    nav{
+      position:fixed; top:0; left:0; width:100%;
+      background:rgba(10,15,30,0.7); backdrop-filter:blur(20px);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:15px 7%; z-index:1000; box-shadow:0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo{font-size:1.6rem; font-weight:700; color:var(--accent)}
+    nav ul{list-style:none; display:flex; gap:25px; margin:0; padding:0}
+    nav ul li a{ text-decoration:none; color:#ccc; font-weight:500; transition:0.25s; font-size:1rem}
+    nav ul li a:hover, nav ul li a.active{ color:var(--accent) }
+    .nav-actions{display:flex; gap:10px; align-items:center}
+    .login-btn{
+      background:var(--accent); color:#fff; padding:8px 18px; border-radius:12px; font-weight:600; text-decoration:none;
+      box-shadow:var(--glow);
+    }
+    .login-btn:hover{ transform:scale(1.05) }
+    #darkModeToggle{ background:none; border:2px solid var(--accent); color:var(--accent); border-radius:10px; padding:6px 10px; cursor:pointer }
+    /* ---------------------------------------------------------------- */
+
+    .community {
+      padding:140px 10% 80px;
+      max-width:1100px;
+      margin:0 auto;
+    }
+
+    .page-title { text-align:center; color:var(--accent); font-size:2.8rem; margin-bottom:8px; text-shadow:0 0 20px rgba(0,170,255,0.25) }
+    .page-sub { text-align:center; color:#b0c4de; margin-bottom:28px; font-size:1.05rem }
+
+    .top-row { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:18px }
+    .left-actions { display:flex; align-items:center; gap:12px }
+
+    /* + button */
+    #addPostBtn {
+      width:56px; height:56px; border-radius:50%; border:none; background:var(--accent); color:white; font-size:28px;
+      display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--glow);
+    }
+    #addPostBtn.frozen { opacity:.45; cursor:not-allowed; box-shadow:none; }
+
+    .login-warning { color:#ff7a7a; font-size:0.95rem; display:none; }
+
+    /* Filter */
+    .filter-wrap { margin-left:auto; display:flex; align-items:center; gap:12px }
+    select#topicFilter {
+      appearance: none; -webkit-appearance:none; -moz-appearance:none;
+      padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
+      background:rgba(255,255,255,0.06); color: #fff; font-weight:600; cursor:pointer;
+    }
+    /* when user has chosen (not "All"), make it bold black style */
+    select#topicFilter.filtered { background:#fff; color:#000; font-weight:800; }
+
+    /* Posts stack vertically, newest first */
+    #postsContainer{ margin-top:18px; display:flex; flex-direction:column; gap:18px }
+
+    .post-card{
+      background:var(--card-bg); backdrop-filter:blur(14px); border-radius:14px; padding:20px;
+      box-shadow:var(--glow); cursor:pointer; transition:transform .18s ease, box-shadow .18s ease;
+      text-align:left;
+    }
+    .post-card:hover { transform:translateY(-6px); box-shadow:0 0 32px rgba(0,170,255,0.45) }
+    .post-meta { display:flex; gap:12px; align-items:center; font-size:0.85rem; color:#b8cfe9; margin-bottom:8px }
+    .post-date { color:#9fb7da; font-size:0.8rem }
+    .post-topic { background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:8px; color:#cfeaff; font-weight:700; font-size:0.82rem }
+
+    .post-title { color:var(--accent); font-size:1.12rem; margin:6px 0 10px; font-weight:700 }
+    .post-body { color:#dbeaff; line-height:1.5; font-size:0.98rem }
+
+    /* Modal full-screen white UI for opened post */
+    .post-modal {
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.75); z-index:2200;
+    }
+    .post-modal .card {
+      width:90%; max-width:900px; max-height:88vh; overflow:auto; background:#fff; color:#000; border-radius:12px; padding:24px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    }
+    .modal-close { float:right; cursor:pointer; font-size:20px; color:#888 }
+    .modal-title { color:#0a63a8; font-size:1.4rem; margin:6px 0 4px; font-weight:700 }
+    .modal-meta { color:#666; font-size:0.9rem; margin-bottom:16px }
+    .modal-body { color:#222; line-height:1.6 }
+
+    .replies { margin-top:18px; border-top:1px solid #eee; padding-top:14px }
+    .reply { background:#f6f9ff; padding:10px 12px; border-radius:10px; margin-top:10px; color:#0b2240 }
+    .reply-author { font-weight:700; color:#0a63a8; margin-bottom:6px }
+    .reply-text { color:#0b2240; }
+
+    .reply-area { margin-top:12px; display:flex; flex-direction:column; gap:10px }
+    .reply-area textarea { min-height:80px; padding:10px; border-radius:8px; border:1px solid #ddd; resize:vertical; font-size:1rem; }
+    .reply-area button { align-self:flex-end; background:var(--accent); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700 }
+    .reply-area button:disabled { opacity:.5; cursor:not-allowed }
+
+    footer{ text-align:center; padding:25px; background:rgba(10,15,25,0.8); backdrop-filter:blur(10px); color:#aaa; margin-top:40px }
+
+    /* responsive */
+    @media (max-width:700px){
+      .post-meta{flex-direction:column;align-items:flex-start; gap:6px}
+      .reply-area button{width:100%}
+      .modal-body{font-size:0.95rem}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR (unchanged) -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html" class="active">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+    </div>
+  </nav>
+
+  <main class="community">
+    <div class="page-title">💬 Community Forum</div>
+    <div class="page-sub">Join discussions, ask questions, and learn from others in programming, AI, hardware, and more.</div>
+
+    <div class="top-row">
+      <div class="left-actions">
+        <button id="addPostBtn">+</button>
+        <div id="loginWarning" class="login-warning">You must be logged in to create a post.</div>
+      </div>
+
+      <div class="filter-wrap">
+        <label for="topicFilter" style="color:#f0f2f5;font-weight:600;margin-right:8px">Filter:</label>
+        <select id="topicFilter" style="color:#0c0c0c" aria-label="Filter posts by topic">
+          <option value="All" selected>All</option>
+          <option>Programming & Coding</option>
+          <option>AI & Machine Learning</option>
+          <option>Cybersecurity & Hacking</option>
+          <option>Computer Hardware</option>
+          <option>Web Development</option>
+          <option>Networking</option>
+          <option>Operating Systems</option>
+          <option>Databases</option>
+          <option>Cloud Computing</option>
+          <option>DevOps</option>
+          <option>PC Troubleshooting</option>
+          <option>Software Engineering</option>
+          <option>Robotics</option>
+          <option>Data Science</option>
+          <option>App Development</option>
+          <option>Internet of Things (IoT)</option>
+          <option>AI Ethics</option>
+          <option>Math for Computing</option>
+          <option>History of Computers</option>
+          <option>Career & Certifications</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="postsContainer" aria-live="polite"></div>
+  </main>
+
+  <!-- Full-screen white modal for opened post -->
+  <div id="postModal" class="post-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="card" role="document">
+      <span id="closeModal" class="modal-close">✕</span>
+      <div id="modalContent">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-meta" id="modalMeta"></div>
+        <div class="modal-body" id="modalBody"></div>
+
+        <div class="replies" id="modalReplies">
+          <h4>Replies</h4>
+          <div id="repliesList"></div>
+
+          <div id="replyArea" class="reply-area">
+            <textarea id="replyText" placeholder="Write a reply..."></textarea>
+            <button id="replySendBtn">Reply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 LearnComputers | Designed with 💙 by Amphion</footer>
+
+  <script>
+    /************* Configuration for login simulation *************/
+    // Your real login page should set:
+    // localStorage.setItem('loggedIn','true') and localStorage.setItem('username','YourName')
+    // For quick local testing, you can uncomment:
+    // localStorage.setItem('loggedIn','true'); localStorage.setItem('username','DemoUser');
+
+    const loggedIn = localStorage.getItem('loggedIn') === 'true';
+    const currentUsername = localStorage.getItem('username') || '@You';
+
+    // Elements
+    const addPostBtn = document.getElementById('addPostBtn');
+    const loginWarning = document.getElementById('loginWarning');
+    const topicFilter = document.getElementById('topicFilter');
+    const postsContainer = document.getElementById('postsContainer');
+
+    const postModal = document.getElementById('postModal');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMeta = document.getElementById('modalMeta');
+    const modalBody = document.getElementById('modalBody');
+    const repliesList = document.getElementById('repliesList');
+    const replyArea = document.getElementById('replyArea');
+    const replyText = document.getElementById('replyText');
+    const replySendBtn = document.getElementById('replySendBtn');
+
+    // Posts data structure
+    // Each post: { id, title, text, topic, author, date:Date, replies: [{author,text,date}] }
+    const posts = [
+      { id: genId(), title: "Best OS for ethical hacking in 2025?", text: "Should I stick with Kali Linux or try Parrot OS for pentesting this year?", topic: "Operating Systems", author: "@CodeNinja", date: new Date("2025-10-09T09:00:00"), replies: [
+        { author: "@NetGuru", text: "Kali has more built-in tools, Parrot is lighter.", date: new Date("2025-10-09T11:00:00") }
+      ]},
+      { id: genId(), title: "Getting Started with Python", text: "Python is one of the easiest languages to learn and perfect for beginners. Try building small projects daily to master it!", topic: "Programming & Coding", author: "@Alex", date: new Date("2025-10-08T15:30:00"), replies: [
+        { author: "@Tutor", text: "Start with variables and functions, then projects.", date: new Date("2025-10-08T17:10:00") }
+      ]}
+    ];
+
+    // helper: generate short unique id
+    function genId(){ return 'p_' + Math.random().toString(36).slice(2,10) }
+
+    // show add post button state
+    function updateAddPostUI(){
+      if(!loggedIn){
+        addPostBtn.classList.add('frozen');
+        loginWarning.style.display = 'block';
+      } else {
+        addPostBtn.classList.remove('frozen');
+        loginWarning.style.display = 'none';
+      }
+    }
+    updateAddPostUI();
+
+    // render posts: filter + sort (newest first), stacked vertically
+    function renderPosts(){
+      postsContainer.innerHTML = '';
+      const filterValue = topicFilter.value;
+      // sort newest first
+      const sorted = posts.slice().sort((a,b) => b.date - a.date);
+      const filtered = sorted.filter(p => filterValue === 'All' || p.topic === filterValue);
+      filtered.forEach(p => {
+        const el = document.createElement('article');
+        el.className = 'post-card';
+        el.dataset.postId = p.id;
+        el.innerHTML = `
+          <div class="post-meta">
+            <div class="post-date">📅 ${p.date.toLocaleString()}</div>
+            <div class="post-topic">${p.topic}</div>
+          </div>
+          <div class="post-author" style="color:#bfe6ff;margin-bottom:6px">${p.author}</div>
+          <div class="post-title">${escapeHtml(p.title)}</div>
+          <div class="post-body">${escapeHtml(truncate(p.text, 280))}</div>
+        `;
+        // click opens full view
+        el.addEventListener('click', () => openPost(p.id));
+        postsContainer.appendChild(el);
+      });
+      // visually mark select as filtered if not All
+      if(topicFilter.value !== 'All') topicFilter.classList.add('filtered'); else topicFilter.classList.remove('filtered');
+    }
+
+    // utility: escape
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})
+    }
+    function truncate(s, n){ return (s.length>n)? s.slice(0,n-1)+'…' : s }
+
+    // open post modal by id
+    let currentOpenPostId = null;
+    function openPost(id){
+      const post = posts.find(p => p.id === id);
+      if(!post) return;
+      currentOpenPostId = id;
+      modalTitle.textContent = post.title;
+      modalMeta.textContent = `By ${post.author} • ${post.date.toLocaleString()} • ${post.topic}`;
+      modalBody.textContent = post.text;
+      renderReplies(post);
+      // show reply area only if logged in
+      if(!loggedIn){
+        replyArea.style.display = 'none';
+      } else {
+        replyArea.style.display = 'block';
+      }
+      postModal.style.display = 'flex';
+      postModal.setAttribute('aria-hidden', 'false');
+      replyText.value = '';
+    }
+
+    function renderReplies(post){
+      repliesList.innerHTML = '';
+      if(!post.replies || post.replies.length === 0){
+        repliesList.innerHTML = '<p style="color:#666">No replies yet — be the first to reply.</p>';
+        return;
+      }
+      // show replies in chronological order (oldest first)
+      post.replies.slice().sort((a,b) => a.date - b.date).forEach(r => {
+        const d = document.createElement('div');
+        d.className = 'reply';
+        d.innerHTML = `<div class="reply-author">${escapeHtml(r.author)}</div><div class="reply-text">${escapeHtml(r.text)}</div><div style="font-size:0.8rem;color:#777;margin-top:6px">${new Date(r.date).toLocaleString()}</div>`;
+        repliesList.appendChild(d);
+      });
+    }
+
+    // send reply (only for opened post)
+    replySendBtn.addEventListener('click', () => {
+      if(!loggedIn){
+        Swal.fire({ icon:'warning', title:'Login required', text:'Please log in to reply.' });
+        return;
+      }
+      const text = replyText.value.trim();
+      if(!text) { Swal.fire({ icon:'warning', title:'Empty reply', text:'Please write something to reply.'}); return; }
+      const post = posts.find(p => p.id === currentOpenPostId);
+      if(!post) return;
+      post.replies.push({ author: localStorage.getItem('username') || currentUsername, text, date: new Date() });
+      renderReplies(post);
+      // also update underlying posts list UI if needed (no change to title but good)
+      renderPosts();
+      replyText.value = '';
+      Swal.fire({ icon:'success', title:'Reply posted', timer:1200, showConfirmButton:false });
+    });
+
+    // close modal
+    closeModal.addEventListener('click', () => {
+      postModal.style.display = 'none';
+      postModal.setAttribute('aria-hidden','true');
+      currentOpenPostId = null;
+    });
+    // close on background click
+    postModal.addEventListener('click', (e) => { if(e.target === postModal){ postModal.style.display='none'; currentOpenPostId=null; }});
+
+    // Add post button click: show modal inputs (requires logged in)
+    addPostBtn.addEventListener('click', async () => {
+      if(!loggedIn){
+        Swal.fire({ icon:'warning', title:'Login required', text:'You must be logged in to create a post.'});
+        return;
+      }
+      // Use SweetAlert2 with custom inputs: title, topic, content
+      const { value: formValues } = await Swal.fire({
+        title: 'Create a new post',
+        html:
+          `<input id="swalTitle" class="swal2-input" placeholder="Heading (required)">` +
+          `<select id="swalTopic" class="swal2-select" style="margin-top:8px; padding:8px; border-radius:6px;">` +
+            `<option>Programming & Coding</option><option>AI & Machine Learning</option><option>Cybersecurity & Hacking</option>` +
+            `<option>Computer Hardware</option><option>Web Development</option><option>Networking</option>` +
+            `<option>Operating Systems</option><option>Databases</option><option>Cloud Computing</option>` +
+            `<option>DevOps</option><option>PC Troubleshooting</option><option>Software Engineering</option>` +
+            `<option>Robotics</option><option>Data Science</option><option>App Development</option>` +
+            `<option>Internet of Things (IoT)</option><option>AI Ethics</option><option>Math for Computing</option>` +
+            `<option>History of Computers</option><option>Career & Certifications</option><option>Other</option>` +
+          `</select>` +
+          `<textarea id="swalContent" class="swal2-textarea" placeholder="Write your post (required)"></textarea>`,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Post',
+        confirmButtonColor: '#00aaff',
+        preConfirm: () => {
+          const title = document.getElementById('swalTitle').value.trim();
+          const topic = document.getElementById('swalTopic').value;
+          const content = document.getElementById('swalContent').value.trim();
+          if(!title) { Swal.showValidationMessage('Heading is required'); return false; }
+          if(!content) { Swal.showValidationMessage('Content is required'); return false; }
+          return { title, topic, content };
+        }
+      });
+
+      if(formValues){
+        const newPost = {
+          id: genId(),
+          title: formValues.title,
+          text: formValues.content,
+          topic: formValues.topic,
+          author: localStorage.getItem('username') || currentUsername,
+          date: new Date(),
+          replies: []
+        };
+        posts.push(newPost);
+        renderPosts();
+        Swal.fire({ icon:'success', title:'Posted', text:'Your post is live.', timer:1200, showConfirmButton:false });
+      }
+    });
+
+    // Filter logic
+    topicFilter.addEventListener('change', () => renderPosts());
+
+    // initial render
+    renderPosts();
+
+    // helper: disable add button if not logged in (keeps visual frozen)
+    if(!loggedIn) addPostBtn.classList.add('frozen');
+
+    // END SCRIPT
+  </script>
+</body>
+</html>

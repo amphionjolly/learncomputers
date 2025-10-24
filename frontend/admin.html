@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Admin Dashboard</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        /* General Styles for the Dashboard Content */
+        :root {
+            --primary-indigo: #4F46E5;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            user-select: none;
+            cursor: default;
+            min-height: 100vh;
+        }
+        .admin-sidebar { min-height: 100vh; }
+        .nav-item {
+            display: block;
+            padding: 0.6rem 1rem;
+            border-radius: 0.5rem;
+            color: #4B5563;
+            transition: background-color 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background-color: #F3F4F6; }
+        .nav-item.active {
+            background-color: var(--primary-indigo);
+            color: white;
+            font-weight: 600;
+        }
+        .nav-item.active:hover { background-color: #4338CA; }
+        .loader {
+            border-top-color: var(--primary-indigo);
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- RETRO LOGIN UI STYLES --- */
+        #login-screen {
+            background-color: #C0C0C0; /* Classic DOS/Windows 3.1 gray */
+        }
+        .retro-box {
+            background-color: #FFFFFF;
+            border: 3px solid #000000;
+            /* Simple, chunky shadow effect */
+            box-shadow: 6px 6px 0 0 #4B4B4B;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .retro-input {
+            border: 2px solid #000000;
+            box-shadow: inset 2px 2px 0 0 #A0A0A0; /* Sunken effect */
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #F0F0F0;
+            border-radius: 0; /* No rounded corners */
+            padding: 8px;
+        }
+        .retro-button {
+            background-color: #C0C0C0;
+            color: #000000;
+            border: 3px solid #000000;
+            box-shadow: 2px 2px 0 0 #4B4B4B;
+            transition: none;
+            font-weight: bold;
+            text-shadow: 1px 1px #FFFFFF;
+            border-radius: 0;
+        }
+        .retro-button:hover {
+            background-color: #B0B0B0;
+        }
+        .retro-button:active {
+            /* Pushed-in effect on click */
+            box-shadow: none;
+            transform: translate(3px, 3px);
+            background-color: #909090;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen bg-gray-100 relative">
+
+    <!-- 0. Login Screen (Initially visible) -->
+    <div id="login-screen" class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="w-full max-w-md retro-box p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-extrabold text-black uppercase">
+                    Admin System Access
+                </h1>
+                <p class="text-xs text-gray-700 mt-2">v1.2.1998 - Authentication Required</p>
+            </div>
+            
+            <form onsubmit="event.preventDefault(); attemptLogin();" class="space-y-6">
+                
+                <!-- Username Input -->
+                <div>
+                    <label for="login-username" class="block text-sm font-bold text-black mb-1">USER NAME</label>
+                    <input type="text" id="login-username" required autocomplete="username"
+                           class="w-full retro-input"
+                           placeholder="Enter admin username">
+                </div>
+                
+                <!-- Triple Password Input -->
+                <div>
+                    <label class="block text-sm font-bold text-black mb-2">PASSWORD (ALL THREE REQUIRED)</label>
+                    <input type="password" id="login-pass1" required autocomplete="new-password"
+                           class="w-full retro-input mb-2"
+                           placeholder="Password 1">
+                    <input type="password" id="login-pass2" required autocomplete="new-password"
+                           class="w-full retro-input mb-2"
+                           placeholder="Password 2">
+                    <input type="password" id="login-pass3" required autocomplete="new-password"
+                           class="w-full retro-input"
+                           placeholder="Password 3" onkeydown="if(event.key === 'Enter') attemptLogin()">
+                </div>
+                
+                <!-- Error Message Container -->
+                <div id="login-error-message" class="text-sm font-bold text-red-700 bg-red-100 p-2 border border-red-700 h-10 flex items-center"></div>
+
+                <button type="submit"
+                        class="retro-button w-full flex justify-center py-2 px-4">
+                    ACCESS SYSTEM
+                </button>
+            </form>
+            
+            <p class="mt-8 text-center text-xs text-gray-500">
+                Unauthorized access is strictly prohibited.
+            </p>
+        </div>
+    </div>
+
+
+    <!-- Main Application Wrapper (Initially hidden) -->
+    <div id="main-app-wrapper" class="flex flex-grow hidden">
+
+        <!-- 1. Sidebar Navigation (Left Panel) -->
+        <div id="sidebar" class="admin-sidebar w-64 bg-white border-r border-gray-200 flex flex-col justify-between p-6 shadow-lg z-20 sticky top-0">
+            
+            <!-- Logo/Title -->
+            <div class="text-2xl font-extrabold text-gray-800 mb-10 border-b pb-4">
+                <span class="text-indigo-600">Web</span>Admin
+            </div>
+            
+            <!-- Navigation Links -->
+            <nav class="space-y-2 flex-grow">
+                <!-- Data-content is used by JavaScript to load the correct view -->
+                <a href="#" class="nav-item active" data-content="dashboard">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2 2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span>Dashboard</span>
+                    </div>
+                </a>
+                <a href="#" class="nav-item" data-content="users">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H9a3 3 0 01-3-3v-1a6 6 0 0112 0v1a3 3 0 01-3 3z"></path></svg>
+                        <span>Users</span>
+                    </div>
+                </a>
+                <a href="#" class="nav-item" data-content="content">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Content Manager</span>
+                    </div>
+                </a>
+                <a href="#" class="nav-item" data-content="settings">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35-.386.198-.77.382-1.067.572-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-2.572-1.065c-.426-1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c.94-1.543-.826-3.31-2.37-2.37a1.724 1.724 0 00-2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span>Settings</span>
+                    </div>
+                </a>
+            </nav>
+            
+            <!-- User Profile (Bottom) -->
+            <div class="border-t border-gray-200 pt-6 mt-6 flex items-center space-x-3">
+                <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-sm font-semibold text-indigo-700">GA</div>
+                <div>
+                    <p class="text-sm font-medium text-gray-800">Guest Admin</p>
+                    <button onclick="logout()" class="text-xs text-gray-500 hover:text-indigo-600 transition focus:outline-none">Sign Out</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content Wrapper -->
+        <div class="flex-grow flex flex-col relative">
+            
+            <!-- 2. Top Header/Search Bar -->
+            <div id="header" class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 shadow-sm sticky top-0 z-10">
+                <h1 id="page-title" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+                
+                <!-- Quick Search Input (Gemini API Integrated) -->
+                <div class="flex items-center w-96 bg-gray-100 rounded-xl p-1 border border-gray-200 shadow-inner">
+                    <input id="quick-search-bar" type="text" placeholder="Quick Search for Data Insights (e.g., 'latest SEO trends')" class="bg-transparent focus:outline-none w-full px-3 py-1.5 text-sm placeholder-gray-500" onkeydown="if(event.key === 'Enter') performSearch()">
+                    <button onclick="performSearch()" class="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg mr-0.5 hover:bg-indigo-700 transition flex items-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Admin Main Content Area -->
+            <div id="admin-content-view" class="p-8 overflow-y-auto flex-grow">
+                <!-- Content will be dynamically loaded here by JavaScript -->
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loading-overlay" class="absolute inset-0 bg-white/70 flex items-center justify-center hidden z-30">
+                <div class="flex flex-col items-center">
+                    <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+                    <p class="text-lg font-semibold text-indigo-600">Fetching Data Insights...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Global references and API Key
+        const apiKey = ""; 
+        const contentView = document.getElementById('admin-content-view');
+        const searchBar = document.getElementById('quick-search-bar');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const pageTitle = document.getElementById('page-title');
+        
+        // New elements for login
+        const loginScreen = document.getElementById('login-screen');
+        const loginUsernameInput = document.getElementById('login-username');
+        const loginPass1Input = document.getElementById('login-pass1');
+        const loginPass2Input = document.getElementById('login-pass2');
+        const loginPass3Input = document.getElementById('login-pass3');
+        const loginErrorMsg = document.getElementById('login-error-message');
+        const mainApp = document.getElementById('main-app-wrapper');
+
+        // Fixed Credentials (as per user request)
+        const FIXED_USERNAME = "c";
+        const REQUIRED_PASSWORDS = [
+            "amphionjolly@gmail.com",
+            "admin-password",
+            "a1b2c3"
+        ];
+        
+        // --- Authentication Logic ---
+
+        function attemptLogin() {
+            const enteredUsername = loginUsernameInput.value.trim();
+            const enteredPasswords = [
+                loginPass1Input.value.trim(),
+                loginPass2Input.value.trim(),
+                loginPass3Input.value.trim()
+            ];
+
+            // 1. Check Username
+            if (enteredUsername !== FIXED_USERNAME) {
+                loginErrorMsg.textContent = 'ACCESS DENIED: Invalid username.';
+                return;
+            }
+
+            // 2. Check all three unique passwords are present (order agnostic)
+            let allPasswordsFound = true;
+            
+            // Convert entered passwords to a Set for faster lookup and handling duplicates
+            const enteredSet = new Set(enteredPasswords.filter(p => p.length > 0)); 
+            
+            // Check if all required passwords are in the entered set
+            for (const requiredPass of REQUIRED_PASSWORDS) {
+                if (!enteredSet.has(requiredPass)) {
+                    allPasswordsFound = false;
+                    break;
+                }
+            }
+
+            // Also ensure the user entered 3 unique passwords in the fields
+            if (enteredSet.size !== 3) {
+                allPasswordsFound = false;
+            }
+            
+            // Final login decision
+            if (allPasswordsFound) {
+                // Success
+                loginErrorMsg.textContent = 'ACCESS GRANTED.';
+                // Delay showing the app slightly for a nice transition
+                setTimeout(() => {
+                    loginScreen.classList.add('hidden');
+                    mainApp.classList.remove('hidden');
+                    switchContent('dashboard');
+                }, 500); 
+            } else {
+                // Failure
+                loginErrorMsg.textContent = 'ACCESS DENIED: All three pass phrases must be unique and correct.';
+                // Clear all password fields
+                loginPass1Input.value = '';
+                loginPass2Input.value = '';
+                loginPass3Input.value = '';
+                loginPass1Input.focus();
+            }
+        }
+
+        function logout() {
+            // Hide the dashboard and show the login screen
+            mainApp.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            // Clear inputs on logout
+            loginUsernameInput.value = '';
+            loginPass1Input.value = '';
+            loginPass2Input.value = '';
+            loginPass3Input.value = '';
+            loginErrorMsg.textContent = '';
+            loginUsernameInput.focus();
+        }
+
+
+        // Helper function for exponential backoff on fetch
+        async function fetchWithRetry(url, options, maxRetries = 3) {
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    console.warn(`Request failed, retrying in ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // --- Content Management Logic ---
+
+        // Dashboard HTML content template
+        const dashboardHtml = `
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-indigo-500">
+                    <p class="text-sm text-gray-500 font-medium">Total Users</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">1,245</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                    <p class="text-sm text-gray-500 font-medium">Monthly Revenue</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">$45,900</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                    <p class="text-sm text-gray-500 font-medium">Pending Tickets</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">15</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-red-500">
+                    <p class="text-sm text-gray-500 font-medium">Bounce Rate</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">4.5%</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Activity Card -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Recent Activity Log</h2>
+                    <ul class="space-y-4">
+                        <li class="flex justify-between items-start text-sm">
+                            <span class="text-gray-700">User <strong>Jane Doe</strong> updated pricing table.</span>
+                            <span class="text-xs text-gray-500 flex-shrink-0 ml-4">5 min ago</span>
+                        </li>
+                        <li class="flex justify-between items-start text-sm">
+                            <span class="text-gray-700"><strong>New User</strong> registered: John Smith.</span>
+                            <span class="text-xs text-gray-500 flex-shrink-0 ml-4">1 hour ago</span>
+                        </li>
+                        <li class="flex justify-between items-start text-sm">
+                            <span class="text-gray-700">System backup completed successfully.</span>
+                            <span class="text-xs text-gray-500 flex-shrink-0 ml-4">Yesterday</span>
+                        </li>
+                        <li class="flex justify-between items-start text-sm">
+                            <span class="text-gray-700">Content article **Product Launch** drafted.</span>
+                            <span class="text-xs text-gray-500 flex-shrink-0 ml-4">2 days ago</span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Notifications Card -->
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Notifications</h2>
+                    <ul class="space-y-4">
+                        <li class="text-sm text-yellow-600">⚠️ Database connection latency high.</li>
+                        <li class="text-sm text-red-600">❌ Failed payment: 3 accounts pending.</li>
+                        <li class="text-sm text-green-600">✅ SSL Certificate renewal successful.</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        function switchContent(contentId) {
+            // Remove active state from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active state to the clicked item
+            const activeItem = document.querySelector(`.nav-item[data-content="${contentId}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+            
+            // Set title
+            pageTitle.textContent = contentId.charAt(0).toUpperCase() + contentId.slice(1).replace('-', ' ');
+
+            // Simple content injection based on ID
+            let contentHtml = '';
+            switch (contentId) {
+                case 'dashboard':
+                    contentView.innerHTML = dashboardHtml;
+                    break;
+                case 'users':
+                    contentHtml = `<h2 class="text-2xl font-semibold mb-6">User Management</h2>
+                                   <div class="bg-white p-6 rounded-xl shadow-lg">
+                                       <p class="text-lg font-medium mb-4">Current Registered Users</p>
+                                       <table class="min-w-full divide-y divide-gray-200">
+                                           <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th><th class="px-6 py-3"></th></tr></thead>
+                                           <tbody class="divide-y divide-gray-200">
+                                               <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">John Smith</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">john@example.com</td><td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">Admin</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a></td></tr>
+                                               <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alice Johnson</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">alice@test.com</td><td class="px-6 py-4 whitespace-nowrap text-sm text-blue-600">Editor</td><td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"><a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a></td></tr>
+                                           </tbody>
+                                       </table>
+                                       <button class="mt-4 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">Add New User</button>
+                                   </div>`;
+                    contentView.innerHTML = contentHtml;
+                    break;
+                case 'content':
+                    contentView.innerHTML = `<h2 class="text-2xl font-semibold mb-6">Content Manager</h2>
+                                   <div class="bg-white p-6 rounded-xl shadow-lg">
+                                       <p class="text-lg font-medium mb-4">Website Pages & Articles</p>
+                                       <ul class="list-disc ml-5 space-y-3 text-sm">
+                                           <li class="text-gray-700">Homepage <span class="text-xs text-green-600">(Published)</span> <a href="#" class="text-indigo-600 ml-3 hover:underline">Edit</a></li>
+                                           <li class="text-gray-700">Pricing Page <span class="text-xs text-green-600">(Published)</span> <a href="#" class="text-indigo-600 ml-3 hover:underline">Edit</a></li>
+                                           <li class="text-gray-700">Q4 Blog Post Draft <span class="text-xs text-yellow-600">(Draft)</span> <a href="#" class="text-indigo-600 ml-3 hover:underline">Edit</a></li>
+                                       </ul>
+                                        <button class="mt-6 bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">Create New Page</button>
+                                   </div>`;
+                    break;
+                case 'settings':
+                    contentView.innerHTML = `<h2 class="text-2xl font-semibold mb-6">System Settings</h2>
+                                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="p-6 bg-white rounded-xl shadow-lg">
+                                            <h3 class="text-lg font-medium mb-4">General Configuration</h3>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Default Timezone</label>
+                                            <select class="p-2 border border-gray-300 rounded-md w-full">
+                                                <option>UTC</option>
+                                                <option>EST</option>
+                                                <option>PST</option>
+                                            </select>
+                                        </div>
+                                        <div class="p-6 bg-white rounded-xl shadow-lg">
+                                            <h3 class="text-lg font-medium mb-4">Security</h3>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Enable Two-Factor Auth</label>
+                                            <input type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                            <p class="text-xs text-gray-500 mt-2">Recommended for all administrators.</p>
+                                        </div>
+                                   </div>`;
+                    break;
+                case 'insights':
+                     contentView.innerHTML = `<h2 class="text-2xl font-semibold mb-6">Quick Search Insights</h2>
+                                            <div id="insights-placeholder" class="bg-white p-6 rounded-xl shadow-lg text-gray-600">
+                                                Enter a query into the Quick Search bar in the top right to analyze data or find information.
+                                            </div>`;
+                    break;
+                default:
+                    contentView.innerHTML = `<h2 class="text-2xl font-semibold mb-4">404 Error</h2><p class="text-red-500">The requested admin section could not be found.</p>`;
+            }
+        }
+
+        // Set up event listeners for navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchContent(item.dataset.content);
+            });
+        });
+
+        // --- Quick Search (Gemini API Integration) ---
+        
+        // Function to perform the search/insight query
+        async function performSearch() {
+            const query = searchBar.value.trim();
+            if (!query) return;
+            
+            // 1. Switch to Insights View
+            switchContent('insights');
+            const insightsContainer = document.getElementById('insights-placeholder');
+            insightsContainer.innerHTML = ''; // Clear previous content
+            insightsContainer.classList.remove('text-gray-600');
+            insightsContainer.classList.add('min-h-[300px]');
+
+
+            // 2. Show loading overlay
+            loadingOverlay.classList.remove('hidden');
+
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            // Adapt the system instruction for an Admin/Insight role
+            const systemPrompt = "Act as an intelligent data insight engine for an administrator. Based on the user's query and the search results, provide a structured, professional summary with clear headings and bullet points where appropriate. Focus on relevance to website operations or business strategy. Do not use conversational language (like 'Hello' or 'Let me know').";
+
+            const payload = {
+                contents: [{ parts: [{ text: query }] }],
+                tools: [{ "google_search": {} }], // Enable Google Search grounding
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+            };
+
+            try {
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const candidate = result.candidates?.[0];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const text = candidate.content.parts[0].text;
+                    let sources = [];
+                    const groundingMetadata = candidate.groundingMetadata;
+
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+
+                    // Render the result
+                    let htmlContent = `
+                        <h3 class="text-xl font-semibold mb-4 text-indigo-700 border-b pb-2">Analysis for: "${query}"</h3>
+                        <div class="prose max-w-none text-gray-800">${formatTextToHtml(text)}</div>
+                    `;
+
+                    if (sources.length > 0) {
+                        htmlContent += `<div class="mt-6 border-t pt-4">
+                            <h4 class="text-sm font-semibold mb-2 text-gray-600">Data Sources:</h4>
+                            <ul class="list-disc ml-5 space-y-1 text-xs text-blue-600">
+                                ${sources.map(s => `<li><a href="${s.uri}" target="_blank" class="hover:underline">${s.title}</a></li>`).join('')}
+                            </ul>
+                        </div>`;
+                    }
+
+                    insightsContainer.innerHTML = htmlContent;
+
+                } else {
+                    insightsContainer.innerHTML = '<p class="text-red-500 font-bold">Error: Could not retrieve insights.</p><p class="mt-2 text-sm text-gray-600">Please try a different query. The service may be temporarily unavailable.</p>';
+                }
+
+            } catch (e) {
+                console.error("Gemini API call failed:", e);
+                insightsContainer.innerHTML = `<p class="text-red-500 font-bold">Network/API Error:</p><p class="mt-2 text-sm text-gray-600">Failed to connect to the insights service. Error details: ${e.message}</p>`;
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                insightsContainer.classList.remove('min-h-[300px]');
+            }
+        }
+
+        // Simple utility to convert markdown-style text to basic HTML (for the 'browser' display)
+        function formatTextToHtml(text) {
+            // Convert headings, bolding, and lists
+            let html = text.replace(/### (.*)/g, '<h4>$1</h4>')
+                           .replace(/## (.*)/g, '<h3>$1</h3>')
+                           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert list items
+            html = html.replace(/\* (.*)/g, '<li>$1</li>');
+            html = html.replace(/<p>\s*<li>/g, '<ul><li>').replace(/<\/li>\s*<\/p>/g, '</li></ul>');
+
+            // Replace double newlines with paragraphs, single newlines with <br>
+            html = html.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+
+            return `<p>${html}</p>`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<section class="flex justify-center items-center py-24">
+<div class="glass-card p-8 max-w-md w-full">
+<h2 class="text-2xl font-bold mb-6 text-center">Sign Up</h2>
+<form id="signupForm" class="space-y-4">
+<input type="email" placeholder="Email" name="email" required class="w-full p-2 border rounded">
+<input type="password" placeholder="Password" name="password" required class="w-full p-2 border rounded">
+<button type="submit" class="gradient-btn w-full">Sign Up</button>
+</form>
+<p class="mt-4 text-center">Already have an account? <a href="login.html" class="text-blue-600 hover:underline">Login</a></p>
+</div>
+</section>
+
+<script>
+document.getElementById("signupForm").addEventListener("submit", async(e)=>{
+  e.preventDefault();
+  const email = e.target.email.value;
+  const password = e.target.password.value;
+  const res = await fetch("http://localhost:5000/api/auth/signup",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email,password})
+  });
+  const data = await res.json();
+  if(data.msg){ alert("Signup successful"); window.location.href="login.html"; }
+  else{ alert(data.msg || "Error"); }
+});
+</script>
