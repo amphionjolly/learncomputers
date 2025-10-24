@@ -42,8 +42,6 @@
       font-size: 1.6rem;
       font-weight: 700;
       color: var(--accent);
-      /* FIX: Ensure logo is on the left on mobile */
-      order: 1; 
     }
     nav ul {
       list-style: none;
@@ -65,7 +63,6 @@
       display: flex;
       gap: 10px;
       align-items: center;
-      order: 3; /* Desktop default */
     }
     .login-btn {
       background: var(--accent);
@@ -184,113 +181,87 @@
       font-size: 0.9rem;
       color: #aaa;
     }
-    
-    /* 📱 MOBILE RESPONSIVENESS */
-    @media (max-width: 800px) {
-      /* Hide the desktop menu by default */
-      nav ul {
-        /* display: none; <-- REMOVED: Managed by JavaScript to prevent flash of content */
-        flex-direction: column; /* Stack links vertically */
-        width: 100%; /* Take full width */
-        position: absolute;
-        top: 65px; /* Adjust based on your nav height */
-        left: 0;
-        background: rgba(10, 15, 30, 0.95);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 10px 0;
-        box-shadow: 0 20px 20px rgba(0,0,0,0.5);
-      }
-      /* Style the links in the mobile menu */
-      nav ul li {
-        text-align: center;
-        width: 100%;
-      }
-      nav ul li a {
-        display: block; /* Make the whole link area clickable */
-        padding: 12px 0;
-        width: 100%;
-      }
-      /* Adjust main nav container for better mobile spacing */
-      nav {
-        padding: 12px 5%;
-        box-shadow: 0 0 10px rgba(0,0,0,0.7);
-      }
-      .nav-actions {
-        order: 3; /* Moves actions to the far right */
-        gap: 5px;
-      }
-      nav .logo {
-        order: 1; /* Moves logo to the far left */
-      }
-      #menuToggle {
-        display: block !important; /* Forces toggle button to show on mobile */
-        order: 2; /* Positions the toggle button between logo and actions */
-        margin-left: auto; /* Pushes the button to the right of the logo */
-      }
-      .login-btn {
-        padding: 6px 14px; /* Smaller login button */
-        font-size: 0.9rem;
-      }
-      /* Adjust Hero section padding for smaller screens */
-      .hero {
-        padding-top: 100px;
-        min-height: 80vh;
-      }
-      .hero h1 {
-        font-size: 2.5rem;
-      }
-      .hero p {
-        font-size: 1rem;
-      }
-      .features {
-        padding: 50px 5%;
-      }
-      .feature-card {
-        padding: 20px; /* Slightly smaller card padding */
-      }
+
+    #mobileWarningOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(6, 10, 20, 0.95); /* Semi-transparent dark background */
+      backdrop-filter: blur(8px);
+      z-index: 5000; /* Must be high to cover everything */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .warning-card {
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 0 40px rgba(0, 170, 255, 0.5);
+      text-align: center;
+    }
+
+    .warning-header {
+      margin-bottom: 20px;
+    }
+
+    .warning-card h2 {
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-top: 10px;
+    }
+
+    .warning-card p {
+      color: #b0c4de;
+      margin-bottom: 25px;
+    }
+
+    .option-group {
+      text-align: left;
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+       margin-bottom: 25px;
+    }
+
+    .option-group h3 {
+      color: #fff;
+      font-size: 1.1rem;
+      margin-top: 0;
+    }
+
+    .option-group ol, .option-group p {
+      padding-left: 20px;
+      color: #ccc;
+      font-size: 0.95rem;
+    }
+
+    .browser-steps {
+     padding: 10px;
+     border: 1px dashed rgba(0, 170, 255, 0.5);
+     border-radius: 8px;
+     font-size: 0.85rem;
+    line-height: 1.5;
+    }
+/* Ensure the login-btn style is reused for the continue button */
+    #continueAnywayBtn {
+     /* Uses existing .login-btn styles */
+      display: inline-block;
     }
   </style>
 
-  <script>
-    // FIX: Function to manage the menu state on load and resize
-    function setupMobileMenu() {
-      const menuToggle = document.getElementById('menuToggle');
-      const navUl = document.querySelector('nav ul');
-      const mobileBreakpoint = 800;
-
-      if (!menuToggle || !navUl) return;
-
-      const isMobile = window.innerWidth <= mobileBreakpoint;
-
-      // 1. Initial State Check (Crucial fix for page load)
-      if (isMobile) {
-        // Force hide the menu list on mobile load
-        navUl.style.display = 'none';
-        // The CSS media query manages the menuToggle display
-      } else {
-        // Force show the menu list on desktop
-        navUl.style.display = 'flex';
-      }
-
-      // 2. Toggle Event Listener
-      menuToggle.addEventListener('click', () => {
-        const isExpanded = navUl.style.display === 'flex';
-        navUl.style.display = isExpanded ? 'none' : 'flex';
-        menuToggle.setAttribute('aria-expanded', !isExpanded);
-      });
-    }
-
-    // Call the setup function when the DOM is ready
-    document.addEventListener('DOMContentLoaded', setupMobileMenu);
-
-    // Re-check state on resize
-    window.addEventListener('resize', setupMobileMenu);
-  </script>
+  
 </head>
 <body>
   <nav>
     <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
-    <button id="menuToggle" aria-label="Toggle Navigation" aria-expanded="false" style="background:none; border:none; color:var(--accent); font-size:1.5rem; cursor:pointer; z-index:1001; display:none;">☰</button>
     <ul>
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="learning.html">Learn</a></li>
@@ -315,29 +286,114 @@
 
   <section class="features">
     <div class="feature-card">
-      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="AI icon">
+      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="">
       <h3>AI-Powered Courses</h3>
       <p>Guided AI lessons that adjust to your skill level for maximum learning efficiency.</p>
     </div>
 
     <div class="feature-card">
-      <img src="https://img.icons8.com/color/96/hacker.png" alt="Hacker icon">
+      <img src="https://img.icons8.com/color/96/hacker.png" alt="">
       <h3>Cybersecurity Practice</h3>
       <p>Defend systems, crack simulations, and understand how hackers think — safely.</p>
     </div>
 
     <div class="feature-card">
-      <img src="https://img.icons8.com/color/96/source-code.png" alt="Source code icon">
+      <img src="https://img.icons8.com/color/96/source-code.png" alt="">
       <h3>Programming Mastery</h3>
       <p>Complete structured coding tracks with real project experience and gamified rewards.</p>
     </div>
 
     <div class="feature-card">
-      <img src="https://img.icons8.com/color/96/conference-call.png" alt="Conference call icon">
+      <img src="https://img.icons8.com/color/96/conference-call.png" alt="">
       <h3>Collaborative Community</h3>
       <p>Join thousands of learners, share insights, and grow together in the global tech arena.</p>
     </div>
   </section>
+  <div id="mobileWarningOverlay" style="display: none;">
+   <div class="warning-card">
+     <div class="warning-header">
+       <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+       <h2>Optimal Viewing Recommended</h2>
+     </div>
+     <p>Our learning modules are best experienced on a desktop computer due to the complex layout and interactive elements.</p>
+    
+     <div class="option-group">
+       <h3>We recommend you:</h3>
+       <ol>
+         <li>**Switch to a PC or Laptop.**</li>
+         <li>**Use Desktop Site:** (Tap the 'Continue Anyway' button, then follow steps below).</li>
+       </ol>
+      
+       <h4>How to Enable Desktop Site:</h4>
+       <p class="browser-steps">
+         **Chrome/Edge:** Tap ⁝ (three dots) > Check "Desktop site".<br>
+         **Firefox:** Tap ⁝ (three dots) > Check "Request Desktop Site".<br>
+         **Safari (iPhone):** Tap aA icon > Tap "Request Desktop Website".
+       </p>
+     </div>
+    
+      <button id="continueAnywayBtn" class="login-btn">Continue Anyway →</button>
+   </div>
+ </div>
+
+ <script>
+  function setupDeviceWarning() {
+    const overlay = document.getElementById('mobileWarningOverlay');
+    const continueBtn = document.getElementById('continueAnywayBtn');
+    
+    if (!overlay) return; // Exit if the HTML structure is missing
+
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    let isMobile = false;
+
+    // Check for common mobile OS/devices
+    if (/android/i.test(userAgent) || /windows phone/i.test(userAgent)) {
+      isMobile = true;
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      isMobile = true;
+    }
+    
+    // Additional check for screen size (catches some small tablets/desktop resized windows)
+    if (!isMobile && window.innerWidth < 800) {
+        // If it looks like a small screen, show the warning anyway
+        isMobile = true;
+    }
+
+    if (isMobile) {
+      // Show the overlay
+      overlay.style.display = 'flex';
+      
+      // Stop the underlying page from scrolling
+      document.body.style.overflow = 'hidden';
+      
+      // Handle the 'Continue Anyway' button click
+      continueBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+        
+        // Optional: Set a flag in session storage so the warning doesn't pop up again
+        sessionStorage.setItem('mobileWarningDismissed', 'true');
+      });
+
+      // Check if the user already dismissed it in this session
+      if (sessionStorage.getItem('mobileWarningDismissed') === 'true') {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+      }
+      
+    } else {
+      // For PC users, ensure it's hidden and body overflow is normal
+      overlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Run the detection when the page loads
+  document.addEventListener('DOMContentLoaded', setupDeviceWarning);
+  
+  // Also run on resize to handle changing window sizes (e.g., in development tools)
+  window.addEventListener('resize', setupDeviceWarning);
+</script>
 
   <footer>
     © 2025 LearnComputers | Designed with 💙 by Amphion
