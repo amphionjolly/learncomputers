@@ -182,79 +182,103 @@
       color: #aaa;
     }
 
-    #mobileWarningOverlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(6, 10, 20, 0.95); /* Semi-transparent dark background */
-      backdrop-filter: blur(8px);
-      z-index: 5000; /* Must be high to cover everything */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
+    /* 🚫 DEVICE WARNING OVERLAY STYLES 🚫 */
+#mobileWarningOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Ensure a full black background to completely hide the content underneath */
+  background: rgba(0, 0, 0, 0.98); 
+  backdrop-filter: blur(8px);
+  z-index: 5000; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  /* Crucial: Prevent scrolling inside the overlay itself */
+  overflow-y: auto; 
+}
 
-    .warning-card {
-      background: radial-gradient(circle at top left, #101935, #060a14);
-      border: 1px solid var(--accent);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 450px;
-      width: 90%;
-      box-shadow: 0 0 40px rgba(0, 170, 255, 0.5);
-      text-align: center;
-    }
+.warning-card {
+  /* Use a consistent, solid dark background for better contrast */
+  background: #0a0f1f; 
+  /* Add a very strong, distinct border and glow */
+  border: 2px solid var(--accent); 
+  border-radius: 20px;
+  padding: 35px 25px; /* Slightly more vertical padding */
+  max-width: 450px;
+  width: 95%; /* Use slightly more width on mobile */
+  /* Stronger glow for a clearer edge */
+  box-shadow: 0 0 50px rgba(0, 170, 255, 0.8), inset 0 0 10px rgba(0, 170, 255, 0.4); 
+  text-align: center;
+  margin: auto; /* Center card if content makes overlay scroll */
+}
 
-    .warning-header {
-      margin-bottom: 20px;
-    }
+.warning-header {
+  margin-bottom: 20px;
+}
 
-    .warning-card h2 {
-      font-size: 1.5rem;
-      color: var(--accent);
-      margin-top: 10px;
-    }
+.warning-card h2 {
+  font-size: 1.6rem;
+  color: var(--accent);
+  margin-top: 10px;
+  text-shadow: 0 0 10px rgba(0, 170, 255, 0.7); /* Enhance title visibility */
+}
 
-    .warning-card p {
-      color: #b0c4de;
-      margin-bottom: 25px;
-    }
+.warning-card p {
+  color: #c0d8f5; /* Lighter color for better readability */
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
 
-    .option-group {
-      text-align: left;
-      padding: 15px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
-       margin-bottom: 25px;
-    }
+.option-group {
+  text-align: left;
+  padding: 15px;
+  border-radius: 10px;
+  /* Subtle inner background */
+  background: rgba(255, 255, 255, 0.08); 
+  /* Clear inner border */
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  margin-bottom: 25px;
+}
 
-    .option-group h3 {
-      color: #fff;
-      font-size: 1.1rem;
-      margin-top: 0;
-    }
+.option-group h3 {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
 
-    .option-group ol, .option-group p {
-      padding-left: 20px;
-      color: #ccc;
-      font-size: 0.95rem;
-    }
+.option-group ol, .option-group p {
+  padding-left: 20px;
+  color: #ccc;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
 
-    .browser-steps {
-     padding: 10px;
-     border: 1px dashed rgba(0, 170, 255, 0.5);
-     border-radius: 8px;
-     font-size: 0.85rem;
-    line-height: 1.5;
-    }
+.browser-steps {
+    padding: 12px;
+    border: 1px dashed rgba(0, 170, 255, 0.7);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    background: rgba(0, 170, 255, 0.05);
+}
 /* Ensure the login-btn style is reused for the continue button */
-    #continueAnywayBtn {
-     /* Uses existing .login-btn styles */
-      display: inline-block;
-    }
+#continueAnywayBtn {
+    /* Uses existing .login-btn styles */
+    display: inline-block;
+    margin-top: 15px; /* Add some space above the button */
+}
+
+/* Ensure body cannot scroll when overlay is active */
+body.no-scroll {
+    overflow: hidden !important;
+}
   </style>
 
   
@@ -336,7 +360,11 @@
    </div>
  </div>
 
- <script>
+  <footer>
+    © 2025 LearnComputers | Designed with 💙 by Amphion
+  </footer>
+
+  <script>
   function setupDeviceWarning() {
     const overlay = document.getElementById('mobileWarningOverlay');
     const continueBtn = document.getElementById('continueAnywayBtn');
@@ -345,58 +373,45 @@
 
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     let isMobile = false;
+    const mobileBreakpoint = 800; // Define your breakpoint
 
-    // Check for common mobile OS/devices
-    if (/android/i.test(userAgent) || /windows phone/i.test(userAgent)) {
-      isMobile = true;
-    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-      isMobile = true;
-    }
+    // Check for common mobile OS/devices or small screen size
+    const isSmartphone = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
+    const isSmallScreen = window.innerWidth < mobileBreakpoint;
     
-    // Additional check for screen size (catches some small tablets/desktop resized windows)
-    if (!isMobile && window.innerWidth < 800) {
-        // If it looks like a small screen, show the warning anyway
-        isMobile = true;
+    // Show warning if it's a known mobile device OR screen is small and warning hasn't been dismissed
+    if ((isSmartphone || isSmallScreen) && sessionStorage.getItem('mobileWarningDismissed') !== 'true') {
+      isMobile = true;
     }
 
     if (isMobile) {
-      // Show the overlay
+      // 1. SHOW THE OVERLAY AND BLOCK SCROLLING
       overlay.style.display = 'flex';
+      // *** FIX: Apply a class to the body to globally prevent scrolling ***
+      document.body.classList.add('no-scroll');
       
-      // Stop the underlying page from scrolling
-      document.body.style.overflow = 'hidden';
-      
-      // Handle the 'Continue Anyway' button click
+      // 2. Handle the 'Continue Anyway' button click
       continueBtn.addEventListener('click', () => {
         overlay.style.display = 'none';
-        document.body.style.overflow = ''; // Restore scrolling
+        // *** FIX: Remove the class to restore scrolling ***
+        document.body.classList.remove('no-scroll'); 
         
-        // Optional: Set a flag in session storage so the warning doesn't pop up again
+        // Set flag for persistence
         sessionStorage.setItem('mobileWarningDismissed', 'true');
       });
-
-      // Check if the user already dismissed it in this session
-      if (sessionStorage.getItem('mobileWarningDismissed') === 'true') {
-        overlay.style.display = 'none';
-        document.body.style.overflow = '';
-      }
       
     } else {
-      // For PC users, ensure it's hidden and body overflow is normal
+      // 3. For PC users or dismissed sessions: ensure everything is hidden/normal
       overlay.style.display = 'none';
-      document.body.style.overflow = '';
+      document.body.classList.remove('no-scroll'); 
     }
   }
 
   // Run the detection when the page loads
   document.addEventListener('DOMContentLoaded', setupDeviceWarning);
   
-  // Also run on resize to handle changing window sizes (e.g., in development tools)
+  // Re-check state on resize 
   window.addEventListener('resize', setupDeviceWarning);
-</script>
-
-  <footer>
-    © 2025 LearnComputers | Designed with 💙 by Amphion
-  </footer>
+  </script>
 </body>
 </html>
