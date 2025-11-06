@@ -33,7 +33,7 @@ Core Directives:
 2.  **Code Quality is Paramount:** Generate clean, robust, well-commented, and efficient code.
 3.  **Provide Holistic Explanations:** Accompany code with logic, trade-offs, and edge cases.
 4.  **Maintain Conversational Context:** Use the provided history to give context-aware responses.
-5.  **Use Markdown:** Structure responses with Markdown, especially code blocks.`;
+5.  **Output Format MUST be Standard Markdown, including language tags for code blocks (e.g., \`\`\`python). DO NOT use any other internal formatting or special characters that could interfere with the JSON response.**`;
 
 // --- Logging Setup ---
 

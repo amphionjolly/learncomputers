@@ -1,26 +1,323 @@
-<section class="py-16 px-8 bg-gray-100 dark:bg-gray-900">
-<h2 class="text-3xl font-bold mb-8 text-center text-gray-900 dark:text-gray-100">Tech Inspirations</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stories | LearnComputers</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-<div class="glass-card p-6">
-<h3 class="text-xl font-bold mb-2">Sundar Pichai</h3>
-<p>CEO of Google. Journey from India to leading Google, motivation, and innovation insights.</p>
-<a href="stories/sundar.html" class="gradient-btn mt-4 inline-block">Read Story</a>
-</div>
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: 0 0 20px rgba(0,170,255,0.6);
+    }
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
+    }
+    #darkModeToggle {
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: var(--accent);
+      color: white;
+    }
 
-<div class="glass-card p-6">
-<h3 class="text-xl font-bold mb-2">Ada Lovelace</h3>
-<p>The world’s first programmer. Discover her contributions to computing and algorithms.</p>
-<a href="stories/ada.html" class="gradient-btn mt-4 inline-block">Read Story</a>
-</div>
+    /* Hero */
+    .hero {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 140px 20px 60px;
+      color: white;
+      background: radial-gradient(circle at 20% 30%, #1a2849, #060a14);
+    }
+    .hero h1 {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      text-shadow: 0 0 25px rgba(0,170,255,0.6);
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: #b0c4de;
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
 
-<div class="glass-card p-6">
-<h3 class="text-xl font-bold mb-2">Elon Musk</h3>
-<p>Innovator in AI, SpaceX, Tesla. Learn about his inventions and tech philosophy.</p>
-<a href="stories/elon.html" class="gradient-btn mt-4 inline-block">Read Story</a>
-</div>
+    /* Stories */
+    .stories-section {
+      padding: 80px 10%;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 35px;
+    }
+    .story-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 0 25px rgba(0,170,255,0.3);
+      transition: 0.4s;
+      backdrop-filter: blur(15px);
+    }
+    .story-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 0 40px rgba(0,170,255,0.6);
+    }
+    .story-card h2 {
+      color: var(--accent);
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+    }
+    .story-card h3 {
+      color: #fff;
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      opacity: 0.8;
+    }
+    .story-card p {
+      color: #c0d8f5;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
 
-<!-- Add more personalities: Bill Gates, Steve Jobs, Linus Torvalds, Mark Zuckerberg, etc. -->
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: rgba(10, 15, 25, 0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      color: #aaa;
+    }
 
-</div>
-</section>
+    /* Submission Form */
+    .submit-section {
+      text-align: center;
+      padding: 70px 10%;
+      background: linear-gradient(180deg, #0a0f1f, #121a30);
+    }
+    .submit-section h2 {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .submit-section p {
+      color: #b0c4de;
+      margin-bottom: 30px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    input, textarea {
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: white;
+      font-size: 1rem;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    button:hover {
+      box-shadow: 0 0 25px rgba(0,170,255,0.7);
+    }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html" class="active">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Real Stories. Real Innovation.</h1>
+    <p>Discover how the brightest minds shaped the digital era — and share your own journey with the world.</p>
+  </section>
+
+  <section class="stories-section">
+
+    <!-- ✨ TECH ICON STORIES -->
+    <div class="story-card">
+      <h2>Bill Gates</h2>
+      <h3>Microsoft Founder</h3>
+      <p>Bill Gates revolutionized personal computing by co-founding Microsoft, making software accessible worldwide. His legacy includes the creation of Windows OS and ongoing global philanthropy through the Bill & Melinda Gates Foundation.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Sam Altman</h2>
+      <h3>CEO of OpenAI</h3>
+      <p>Sam Altman transformed AI from concept to reality through OpenAI, powering innovations like ChatGPT. His leadership represents a balance between advancing technology and ensuring AI safety for humanity.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Mark Zuckerberg</h2>
+      <h3>Founder of Meta (Facebook)</h3>
+      <p>Mark Zuckerberg created Facebook at just 19, redefining online communication and social connection. Today, he’s focused on building the metaverse — the next evolution of digital interaction.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Sundar Pichai</h2>
+      <h3>CEO of Google & Alphabet</h3>
+      <p>Rising from humble beginnings in India, Sundar Pichai became the CEO of Google and Alphabet, known for his vision in expanding products like Chrome, Android, and AI technologies worldwide.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Elon Musk</h2>
+      <h3>CEO of Tesla & SpaceX</h3>
+      <p>Elon Musk redefined space travel, transportation, and renewable energy. From launching reusable rockets to building electric cars, Musk’s story is about relentless ambition and bold innovation.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Satya Nadella</h2>
+      <h3>CEO of Microsoft</h3>
+      <p>Satya Nadella revived Microsoft’s innovation spirit with cloud computing and AI integration. His leadership emphasizes empathy, inclusivity, and global impact through technology.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Jensen Huang</h2>
+      <h3>Founder & CEO of NVIDIA</h3>
+      <p>Jensen Huang turned NVIDIA into a global leader in AI hardware, enabling breakthroughs in deep learning, graphics, and supercomputing through the GPU revolution.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Linus Torvalds</h2>
+      <h3>Creator of Linux</h3>
+      <p>Linus Torvalds’ creation of Linux became the backbone of servers, Android, and cloud infrastructure worldwide — symbolizing open-source collaboration and innovation.</p>
+    </div>
+
+    <div class="story-card">
+      <h2>Steve Jobs</h2>
+      <h3>Co-founder of Apple</h3>
+      <p>Steve Jobs merged design and technology with perfection, giving the world iconic devices like the iPhone and MacBook, forever transforming digital lifestyle.</p>
+    </div>
+
+    <!-- 🧠 USER & DEV STORIES SECTION -->
+    <div class="story-card">
+      <h2>Amphion Jolly</h2>
+      <h3>Student Developer</h3>
+      <p>At just 14, Amphion built advanced AI and game systems, combining deep ethics with innovation — proving that age is no barrier to shaping the future of superintelligence.</p>
+    </div>
+
+    <!-- 👇 Add more stories here manually -->
+    <!-- Just copy and paste the following block:
+    <div class="story-card">
+      <h2>Person Name</h2>
+      <h3>Title / Role</h3>
+      <p>Your story text here...</p>
+    </div>
+    -->
+
+  </section>
+
+  <section class="submit-section">
+    <h2>Share Your Story</h2>
+    <p>Are you a developer, creator, or learner with a journey worth sharing? Submit your story below — once approved by the admin team, it will appear on this page.</p>
+    <form>
+      <input type="text" placeholder="Your Full Name" required>
+      <input type="text" placeholder="Your Title / Role" required>
+      <textarea rows="5" placeholder="Your story..." required></textarea>
+      <button type="submit">Submit Story →</button>
+    </form>
+  </section>
+
+  <footer>© 2025 LearnComputers. All rights reserved.</footer>
+
+</body>
+</html>
