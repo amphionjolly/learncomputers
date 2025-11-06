@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Learn Computers | Resources</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Computers | Next-Gen AI Learning</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script defer src="darkmode.js"></script>
 
   <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+    }
     body {
       font-family: 'Inter', sans-serif;
       background: radial-gradient(circle at top left, #101935, #060a14);
-      color: white;
+      color: var(--text);
       margin: 0;
+      padding: 0;
       overflow-x: hidden;
     }
-
-    /* 🌐 NAVIGATION (same as index.html) */
+    /* 🌐 NAVIGATION */
     nav {
       position: fixed;
       top: 0;
@@ -35,7 +41,7 @@
     nav .logo {
       font-size: 1.6rem;
       font-weight: 700;
-      color: #00aaff;
+      color: var(--accent);
     }
     nav ul {
       list-style: none;
@@ -51,146 +57,240 @@
       transition: 0.3s;
     }
     nav ul li a:hover, nav ul li a.active {
-      color: #00aaff;
+      color: var(--accent);
     }
-
     .nav-actions {
       display: flex;
       gap: 10px;
       align-items: center;
     }
     .login-btn {
-      background: #00aaff;
+      background: var(--accent);
       color: white;
       padding: 8px 18px;
       border-radius: 12px;
       text-decoration: none;
       font-weight: 600;
       transition: 0.3s;
-      box-shadow: 0 0 20px rgba(0,170,255,0.4);
+      box-shadow: var(--glow);
     }
     .login-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(0,170,255,0.8);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
     }
     #darkModeToggle {
       background: none;
-      border: 2px solid #00aaff;
-      color: #00aaff;
+      border: 2px solid var(--accent);
+      color: var(--accent);
       border-radius: 10px;
       padding: 6px 10px;
       cursor: pointer;
       transition: 0.3s;
     }
     #darkModeToggle:hover {
-      background: #00aaff;
+      background: var(--accent);
       color: white;
     }
 
-    /* PAGE SECTION */
-    .resources-section {
-      padding: 140px 7% 100px;
-    }
-    h1 {
-      text-align: center;
-      font-size: 2.8rem;
-      margin-bottom: 20px;
-      color: #00aaff;
-      text-shadow: 0 0 20px rgba(0,170,255,0.6);
-    }
-    .search-filter {
+    /* 🎯 HERO SECTION */
+    .hero {
+      min-height: 100vh;
       display: flex;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 15px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
+      text-align: center;
+      padding: 140px 20px 60px;
+      color: white;
+      background: radial-gradient(circle at 20% 30%, #1a2849, #060a14);
+      position: relative;
+      overflow: hidden;
     }
-    .search-filter input {
-      padding: 12px 20px;
-      border-radius: 10px;
-      border: none;
-      width: 300px;
-      font-size: 1rem;
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 30px rgba(0,170,255,0.6);
     }
-    .search-filter select {
-      padding: 12px 20px;
-      border-radius: 10px;
-      border: none;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #00aaff;
-      color: #fff;
-      font-weight: 600;
-      transition: 0.3s;
+    .hero p {
+      font-size: 1.2rem;
+      color: #b0c4de;
+      max-width: 650px;
+      margin: 0 auto;
+      line-height: 1.7;
     }
-    .search-filter select:hover {
-      background: #0090dd;
-    }
-
-    details {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 15px;
-      margin-bottom: 15px;
-      padding: 20px;
-      box-shadow: 0 0 15px rgba(0, 170, 255, 0.2);
-    }
-    summary {
-      font-size: 1.4rem;
-      color: #00aaff;
-      cursor: pointer;
-      font-weight: 700;
-      outline: none;
-    }
-    .resources-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .resource-card {
-      background: rgba(255, 255, 255, 0.08);
-      padding: 20px;
-      border-radius: 15px;
-      transition: 0.3s;
-    }
-    .resource-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 25px rgba(0,170,255,0.6);
-    }
-    .resource-card h4 {
-      margin-top: 0;
-      color: #fff;
-    }
-    .resource-card a {
-      color: #00aaff;
-      font-weight: 600;
+    .hero a.btn {
+      margin-top: 35px;
+      padding: 14px 35px;
+      background: var(--accent);
+      color: white;
+      border-radius: 12px;
       text-decoration: none;
+      font-weight: 600;
+      box-shadow: var(--glow);
+      transition: 0.3s;
     }
-    .resource-card a:hover {
-      text-decoration: underline;
+    .hero a.btn:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(0,170,255,0.9);
     }
 
+    /* 🚀 FEATURES */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 40px;
+      padding: 80px 10%;
+      background: linear-gradient(180deg, #0a0f1f, #121a30);
+    }
+    .feature-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      box-shadow: var(--glow);
+      transition: all 0.4s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 35px rgba(0,170,255,0.7);
+    }
+    .feature-card img {
+      height: 70px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+    .feature-card h3 {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      color: #b0c4de;
+      font-size: 0.95rem;
+    }
+
+    /* ⚡ FOOTER */
     footer {
       text-align: center;
       padding: 25px;
-      background: rgba(10,15,25,0.8);
+      background: rgba(10, 15, 25, 0.8);
       backdrop-filter: blur(10px);
       font-size: 0.9rem;
       color: #aaa;
-      position: relative;
-      bottom: 0;
-      width: 100%;
     }
+
+    /* 🚫 DEVICE WARNING OVERLAY STYLES 🚫 */
+#mobileWarningOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Ensure a full black background to completely hide the content underneath */
+  background: rgba(0, 0, 0, 0.98); 
+  backdrop-filter: blur(8px);
+  z-index: 5000; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 10px;
+  /* Crucial: Prevent scrolling inside the overlay itself */
+  overflow-y: auto; 
+}
+
+.warning-card {
+  /* Use a consistent, solid dark background for better contrast */
+  background: #0a0f1f; 
+  /* Add a very strong, distinct border and glow */
+  border: 2px solid var(--accent); 
+  border-radius: 20px;
+  padding: 35px 20px; /* Reduced horizontal padding slightly */
+  max-width: 450px;
+  width: 90%; /* CRITICAL FIX: Ensure it is 90% or less to prevent edge clipping */
+  /* Stronger glow for a clearer edge */
+  box-shadow: 0 0 50px rgba(0, 170, 255, 0.8), inset 0 0 10px rgba(0, 170, 255, 0.4); 
+  text-align: center;
+  margin: auto; 
+}
+
+.warning-header {
+  margin-bottom: 20px;
+}
+
+.warning-card h2 {
+  font-size: 1.6rem;
+  color: var(--accent);
+  margin-top: 10px;
+  text-shadow: 0 0 10px rgba(0, 170, 255, 0.7); /* Enhance title visibility */
+}
+
+.warning-card p {
+  color: #c0d8f5; /* Lighter color for better readability */
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.option-group {
+  text-align: left;
+  padding: 15px;
+  border-radius: 10px;
+  /* Subtle inner background */
+  background: rgba(255, 255, 255, 0.08); 
+  /* Clear inner border */
+  border: 1px solid rgba(0, 170, 255, 0.3);
+  margin-bottom: 25px;
+}
+
+.option-group h3 {
+  color: #fff;
+  font-size: 1.1rem;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.option-group ol, .option-group p {
+  padding-left: 20px;
+  color: #ccc;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.browser-steps {
+    padding: 12px;
+    border: 1px dashed rgba(0, 170, 255, 0.7);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    background: rgba(0, 170, 255, 0.05);
+}
+/* Ensure the login-btn style is reused for the continue button */
+#continueAnywayBtn {
+    /* Uses existing .login-btn styles */
+    display: inline-block;
+    margin-top: 15px; /* Add some space above the button */
+}
+
+/* Ensure body cannot scroll when overlay is active */
+body.no-scroll {
+    overflow: hidden !important;
+}
   </style>
+
+  
 </head>
 <body>
   <nav>
     <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
     <ul>
-      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html" class="active">Home</a></li>
       <li><a href="learning.html">Learn</a></li>
       <li><a href="community.html">Community</a></li>
-      <li><a href="resources.html" class="active">Resources</a></li>
+      <li><a href="resources.html">Resources</a></li>
       <li><a href="stories.html">Stories</a></li>
       <li><a href="chatbot.html">AI Chat</a></li>
       <li><a href="about.html">About</a></li>
@@ -202,84 +302,124 @@
     </div>
   </nav>
 
-  <section class="resources-section">
-    <h1>📚 Explore Resources</h1>
-    <div class="search-filter">
-      <input type="text" id="searchInput" placeholder="Search resources..." />
-      <select id="topicFilter">
-        <option value="all">All Topics</option>
-      </select>
-    </div>
-    <div id="resourcesContainer"></div>
+  <section class="hero">
+    <h1>Learn. Build. Dominate.</h1>
+    <p>Level up your skills in Programming, AI, and Cybersecurity through interactive modules and an intelligent learning assistant.</p>
+    <a href="learning.html" class="btn">Start Learning Now →</a>
   </section>
+
+  <section class="features">
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="">
+      <h3>AI-Powered Courses</h3>
+      <p>Guided AI lessons that adjust to your skill level for maximum learning efficiency.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/hacker.png" alt="">
+      <h3>Cybersecurity Practice</h3>
+      <p>Defend systems, crack simulations, and understand how hackers think — safely.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/source-code.png" alt="">
+      <h3>Programming Mastery</h3>
+      <p>Complete structured coding tracks with real project experience and gamified rewards.</p>
+    </div>
+
+    <div class="feature-card">
+      <img src="https://img.icons8.com/color/96/conference-call.png" alt="">
+      <h3>Collaborative Community</h3>
+      <p>Join thousands of learners, share insights, and grow together in the global tech arena.</p>
+    </div>
+  </section>
+  <div id="mobileWarningOverlay" style="display: none;">
+   <div class="warning-card">
+     <div class="warning-header">
+       <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+       <h2>Optimal Viewing Recommended</h2>
+     </div>
+     <p>Our learning modules are best experienced on a desktop computer due to the complex layout and interactive elements.</p>
+    
+     <div class="option-group">
+       <h3>We recommend you:</h3>
+       <ol>
+         <li>**Switch to a PC or Laptop.**</li>
+         <li>**Use Desktop Site:** (Tap the 'Continue Anyway' button, then follow steps below).</li>
+       </ol>
+      
+       <h4>How to Enable Desktop Site:</h4>
+       <p class="browser-steps">
+         **Chrome/Edge:** Tap ⁝ (three dots) > Check "Desktop site".<br>
+         **Firefox:** Tap ⁝ (three dots) > Check "Request Desktop Site".<br>
+         **Safari (iPhone):** Tap aA icon > Tap "Request Desktop Website".
+       </p>
+     </div>
+    
+  <div class="warning-card">
+    <div class="warning-header">
+      </div>
+    <button id="continueAnywayBtn" class="login-btn" style="margin-bottom: 20px;">Continue Anyway →</button> 
+    
+    <footer class="overlay-footer">
+        © 2025 LearnComputers | Designed with 💙 by Amphion
+    </footer>
+
+   </div>
+  </div>
+ </div>
 
   <footer>
     © 2025 LearnComputers | Designed with 💙 by Amphion
   </footer>
 
   <script>
-    async function loadResources() {
-      try {
-        const res = await fetch("resources.json");
-        const data = await res.json();
-        const container = document.getElementById("resourcesContainer");
-        const filter = document.getElementById("topicFilter");
+   function setupDeviceWarning() {
+    const overlay = document.getElementById('mobileWarningOverlay');
+    const continueBtn = document.getElementById('continueAnywayBtn');
+    
+    if (!overlay) return; // Exit if the HTML structure is missing
 
-        // Populate filter
-        Object.keys(data).forEach(topic => {
-          const opt = document.createElement("option");
-          opt.value = topic;
-          opt.textContent = topic;
-          filter.appendChild(opt);
-        });
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const mobileBreakpoint = 800; 
 
-        function render(filteredTopic = "all", searchTerm = "") {
-          container.innerHTML = "";
-          for (const [topic, items] of Object.entries(data)) {
-            if (filteredTopic !== "all" && topic !== filteredTopic) continue;
+    // Determine if the device is mobile or the screen is small
+    const isSmartphone = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
+    const isSmallScreen = window.innerWidth < mobileBreakpoint;
+    
+    // IMPORTANT: Check if the user is currently using the desktop site (UA changes when enabled)
+    // Note: This check is not 100% reliable across all browsers, but is the best standard attempt.
+    const isDesktopUserAgent = /macintosh|windows/i.test(userAgent) && !/mobile/i.test(userAgent);
+    
+    let showWarning = (isSmartphone || isSmallScreen) && !isDesktopUserAgent;
 
-            const filteredItems = items.filter(item =>
-              item.title.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            if (filteredItems.length === 0) continue;
-
-            const details = document.createElement("details");
-            const summary = document.createElement("summary");
-            summary.textContent = topic;
-            details.appendChild(summary);
-
-            const grid = document.createElement("div");
-            grid.className = "resources-grid";
-
-            filteredItems.forEach(res => {
-              const card = document.createElement("div");
-              card.className = "resource-card";
-              card.innerHTML = `
-                <h4>${res.title}</h4>
-                <p>${res.description}</p>
-                <a href="${res.link}" target="_blank">Open Resource ↗</a>
-              `;
-              grid.appendChild(card);
-            });
-
-            details.appendChild(grid);
-            container.appendChild(details);
-          }
-        }
-
-        render();
-
-        filter.addEventListener("change", () => {
-          render(filter.value, document.getElementById("searchInput").value);
-        });
-        document.getElementById("searchInput").addEventListener("input", e => {
-          render(filter.value, e.target.value);
-        });
-      } catch (err) {
-        console.error("Error loading resources:", err);
-      }
+    if (showWarning) {
+      // 1. SHOW THE OVERLAY AND BLOCK SCROLLING
+      overlay.style.display = 'flex';
+      // Apply a class to the body to globally prevent scrolling
+      document.body.classList.add('no-scroll');
+      
+      // 2. Handle the 'Continue Anyway' button click
+      continueBtn.addEventListener('click', () => {
+        overlay.style.display = 'none';
+        // Remove the class to restore scrolling
+        document.body.classList.remove('no-scroll'); 
+        
+        // *** IMPORTANT FIX: NO sessionStorage LINE HERE. WARNING WILL REAPPEAR ON REFRESH. ***
+      });
+      
+    } else {
+      // 3. For PC users or users who manually enabled desktop mode: ensure everything is hidden/normal
+      overlay.style.display = 'none';
+      document.body.classList.remove('no-scroll'); 
     }
-    loadResources();
+  }
+
+  // Run the detection when the page loads
+  document.addEventListener('DOMContentLoaded', setupDeviceWarning);
+  
+  // Re-check state on resize
+  window.addEventListener('resize', setupDeviceWarning);
   </script>
 </body>
 </html>
