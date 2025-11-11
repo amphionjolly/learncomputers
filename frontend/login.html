@@ -3,136 +3,567 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LearnComputers Login</title>
-    <link rel="stylesheet" href="login.css">
+    <title>Login / Sign Up | LearnComputers</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 for popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Load Firebase SDKs -->
+    <script type="module">
+        // --- THIS IS YOUR LIVE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
+            authDomain: "learncomputers-f88f1.firebaseapp.com",
+            projectId: "learncomputers-f88f1",
+            storageBucket: "learncomputers-f88f1.firebasestorage.app",
+            messagingSenderId: "5443256661",
+            appId: "1:5443256661:web:a2230e7ee2c96749866fdc",
+            measurementId: "G-XRFCTMV5FJ"
+        };
+
+        // --- FIXED IMPORTS ---
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            onAuthStateChanged,
+            GoogleAuthProvider,
+            signInWithPopup,
+            sendPasswordResetEmail // Added for "Forgot Password"
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Enable debug logging in the console
+        setLogLevel('debug');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+        
+        // --- ADDED: Log current domain for debugging unauthorized-domain error ---
+        // You MUST add this domain (origin) to your Firebase Console under:
+        // Authentication -> Settings (or Sign-in method tab) -> Authorized domains
+        console.log("Current execution domain/origin:", window.location.origin);
+        // -----------------------------------------------------------------------
+
+
+        // --- DOM Elements ---
+        const form = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleLink = document.getElementById('toggle-auth');
+        const authTitle = document.getElementById('auth-title');
+        const googleBtn = document.getElementById('google-btn');
+        const forgotPasswordLink = document.getElementById('forgot-password'); // New element
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+
+        let isLogin = true; // Start in "Login" mode
+
+        // --- Utility Functions ---
+
+        /** Displays a custom message box instead of using alert() */
+        function showMessage(text, isError = false) {
+            messageText.textContent = text;
+            messageBox.style.backgroundColor = isError ? '#cc3333' : '#33cc33'; // Red for error, Green for success
+            messageBox.style.transform = 'translateY(0)';
+            // Hide after 5 seconds
+            setTimeout(() => {
+                messageBox.style.transform = 'translateY(-150%)';
+            }, 5000);
+        }
+
+        // --- Auth Listeners ---
+
+        // This listener checks if the user is *already* logged in.
+        // If they are, it sends them straight to the profile page.
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // If logged in, redirect to the profile page
+                window.location.href = 'profile.html'; 
+            }
+            // If no user, just stay on the login page.
+        });
+
+
+        // --- Core Auth Functions ---
+        
+        // Handle Email/Password form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Stop the form from reloading the page
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            submitBtn.textContent = 'Processing...';
+            submitBtn.disabled = true;
+
+            try {
+                if (isLogin) {
+                    // --- Login ---
+                    await signInWithEmailAndPassword(auth, email, password);
+                    showMessage('Login successful! Redirecting...', false);
+                    // onAuthStateChanged will handle the redirect
+                } else {
+                    // --- Signup ---
+                    await createUserWithEmailAndPassword(auth, email, password);
+                    showMessage('Account created and logged in! Redirecting to profile...', false);
+                    // onAuthStateChanged will handle the redirect
+                }
+                
+            } catch (error) {
+                console.error("Auth Error:", error);
+                let message = 'An unknown authentication error occurred.';
+                // Provide user-friendly error messages
+                if (error.code === 'auth/weak-password') {
+                    message = 'Password should be at least 6 characters.';
+                } else if (error.code === 'auth/email-already-in-use') {
+                    message = 'This email is already in use.';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'The email address is not valid.';
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    message = 'Invalid email or password.';
+                }
+                showMessage(`Error: ${message}`, true);
+            } finally {
+                // Re-enable the button
+                submitBtn.textContent = isLogin ? 'Login' : 'Sign Up';
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Handle Google Sign-in button
+        googleBtn.addEventListener('click', async () => {
+            googleBtn.textContent = 'Signing in...';
+            googleBtn.disabled = true;
+            try {
+                // Open Google sign-in popup
+                await signInWithPopup(auth, googleProvider);
+                // onAuthStateChanged will handle the redirect
+            } catch (error) {
+                console.error("Google Auth Error:", error);
+                let errorMessage = 'Google sign-in failed.';
+
+                if (error.code === 'auth/popup-closed-by-user') {
+                    errorMessage = 'Sign-in cancelled.';
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    // This is the most common error if the Firebase Console setup is incomplete
+                    errorMessage = 'Google sign-in is not authorized for this domain. Check your Firebase Authentication Settings.';
+                }
+                
+                showMessage(errorMessage, true);
+            } finally {
+                // Reset button text
+                googleBtn.innerHTML = '<img src="https://www.google.com/favicon.ico" alt="Google logo"> Sign in with Google';
+                googleBtn.disabled = false;
+            }
+        });
+
+        // --- NEW: Forgot Password Function ---
+        forgotPasswordLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const { value: email } = await Swal.fire({
+                title: 'Forgot Password',
+                input: 'email',
+                inputLabel: 'Enter your account email',
+                inputPlaceholder: 'you@example.com',
+                showCancelButton: true,
+                confirmButtonText: 'Send Reset Link',
+                confirmButtonColor: '#00aaff'
+            });
+
+            if (email) {
+                try {
+                    await sendPasswordResetEmail(auth, email);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Reset Link Sent!',
+                        text: 'Please check your email (and spam folder) for a link to reset your password.',
+                        confirmButtonColor: '#00aaff'
+                    });
+                } catch (error) {
+                    console.error("Password Reset Error:", error);
+                    let message = "Could not send reset link. Please check the email address.";
+                    if(error.code === 'auth/user-not-found') {
+                        message = "No account found with this email address.";
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: message,
+                        confirmButtonColor: '#00aaff'
+                    });
+                }
+            }
+        });
+
+
+        // --- UI Toggling ---
+
+        // This switches the form between "Login" and "Sign Up" mode
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isLogin = !isLogin;
+            if (isLogin) {
+                authTitle.textContent = 'Welcome Back';
+                submitBtn.textContent = 'Login';
+                toggleLink.innerHTML = 'Need an account? <span style="color:var(--accent); font-weight: 700;">Sign Up</span>';
+                forgotPasswordLink.style.display = 'block'; // Show "Forgot Password"
+            } else {
+                authTitle.textContent = 'Create New Account';
+                submitBtn.textContent = 'Sign Up';
+                toggleLink.innerHTML = 'Already have an account? <span style="color:var(--accent); font-weight: 700;">Login</span>';
+                forgotPasswordLink.style.display = 'none'; // Hide "Forgot Password"
+            }
+        });
+
+        // Dark Mode Toggle
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+
+    </script>
+
+    <!-- Styles -->
+    <style>
+        :root {
+            --bg: #0a0f1f;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --text: #fff;
+            --accent: #00aaff;
+            --error: #ff5555;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #101935, #060a14);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        main {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding-top: 100px; /* Account for fixed nav */
+            padding-bottom: 50px;
+        }
+
+        /* 🌐 NAVIGATION (Copied from profile.html) */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 15, 30, 0.7);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 7%;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        nav .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 25px;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #ccc;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover, nav ul li a.active {
+            color: var(--accent);
+        }
+        
+        nav ul li a.active {
+            text-shadow: 0 0 8px var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .login-btn {
+             background: var(--accent);
+             color: white;
+             padding: 8px 18px;
+             border-radius: 12px;
+             text-decoration: none;
+             font-weight: 600;
+             transition: 0.3s;
+             box-shadow: 0 0 15px rgba(0,170,255,0.6);
+        }
+        
+         .login-btn:hover {
+             transform: scale(1.05);
+             box-shadow: 0 0 25px rgba(0,170,255,0.8);
+        }
+
+        #darkModeToggle {
+            background: none;
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            border-radius: 10px;
+            padding: 6px 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #darkModeToggle:hover {
+            background: var(--accent);
+            color: white;
+        }
+        
+        /* -------------------------------- */
+
+        .auth-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 0 50px rgba(0,170,255,0.4);
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--accent);
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #c8e4ff;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0,170,255,0.3);
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box; /* Added for consistent padding */
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(0,170,255,0.4);
+        }
+
+        .btn-main, .btn-google {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0,170,255,0.6);
+        }
+        
+        .btn-main:disabled {
+             background: #555;
+             opacity: 0.7;
+             cursor: not-allowed;
+             box-shadow: none;
+        }
+
+        .btn-main:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,170,255,0.8);
+        }
+        
+        .btn-google {
+            background: #fff;
+            color: #111;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-top: 20px;
+        }
+        
+        .btn-google:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        .btn-google:hover:not(:disabled) {
+            background: #eee;
+        }
+        
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .divider {
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        .divider::before, .divider::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 0 10px;
+        }
+
+        .form-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            font-size: 0.95rem;
+        }
+
+        .form-links a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: 600;
+        }
+        
+        #forgot-password {
+            color: #ccc;
+            font-weight: 500;
+        }
+        
+        #forgot-password:hover {
+            color: var(--accent);
+        }
+        
+        /* Message Box */
+        #messageBox {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -150%);
+            padding: 15px 25px;
+            border-radius: 0 0 15px 15px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            transition: transform 0.5s ease-in-out, background-color 0.3s;
+            z-index: 2000;
+        }
+        
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 25px;
+            background: rgba(10, 15, 25, 0.8);
+            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            color: #aaa;
+            width: 100%;
+        }
+
+    </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="neu-icon">
-                    <div class="icon-inner">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
-                    </div>
-                </div>
-                <h2>Welcome back</h2>
-                <p>Please sign in to continue</p>
-            </div>
-            
-            <form class="login-form" id="loginForm" novalidate>
-                <div class="form-group">
-                    <div class="input-group neu-input">
-                        <input type="email" id="email" name="email" required autocomplete="email" placeholder=" ">
-                        <label for="email">Email address</label>
-                        <div class="input-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                <polyline points="22,6 12,13 2,6"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <span class="error-message" id="emailError"></span>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-group neu-input password-group">
-                        <input type="password" id="password" name="password" required autocomplete="current-password" placeholder=" ">
-                        <label for="password">Password</label>
-                        <div class="input-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                <path d="M7 11V7a5 5 0 0110 0v4"/>
-                            </svg>
-                        </div>
-                        <button type="button" class="password-toggle neu-toggle" id="passwordToggle" aria-label="Toggle password visibility">
-                            <svg class="eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            <svg class="eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                                <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <span class="error-message" id="passwordError"></span>
-                </div>
-
-                <div class="form-options">
-                    <div class="remember-wrapper">
-                        <input type="checkbox" id="remember" name="remember">
-                        <label for="remember" class="checkbox-label">
-                            <div class="neu-checkbox">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                    <polyline points="20 6 9 17 4 12"/>
-                                </svg>
-                            </div>
-                            Remember me
-                        </label>
-                    </div>
-                    <a href="#" class="forgot-link">Forgot password?</a>
-                </div>
-
-                <button type="submit" class="neu-button login-btn">
-                    <span class="btn-text">Sign In</span>
-                    <div class="btn-loader">
-                        <div class="neu-spinner"></div>
-                    </div>
-                </button>
-            </form>
-
-            <div class="divider">
-                <div class="divider-line"></div>
-                <span>or continue with</span>
-                <div class="divider-line"></div>
-            </div>
-
-            <div class="social-login">
-                <button type="button" class="social-btn neu-social">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                    </svg>
-                </button>
-                <button type="button" class="social-btn neu-social">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                </button>
-                <button type="button" class="social-btn neu-social">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                </button>
-            </div>
-
-            <div class="signup-link">
-                <p>Don't have an account? <a href="#">Sign up</a></p>
-            </div>
-
-            <div class="success-message" id="successMessage">
-                <div class="success-icon neu-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                </div>
-                <h3>Success!</h3>
-                <p>Redirecting to your dashboard...</p>
-            </div>
+    
+    <!-- Navbar (from profile.html, modified for logged-out state) -->
+    <nav>
+        <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="learning.html">Learn</a></li>
+            <li><a href="community.html">Community</a></li>
+            <li><a href="resources.html">Resources</a></li>
+            <li><a href="stories.html">Stories</a></li>
+            <li><a href="chatbot.html">AI Chat</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+        <div class="nav-actions">
+            <!-- Login button is now part of the nav -->
+            <a href="login.html" class="login-btn">Login</a> 
+            <button id="darkModeToggle">🌙</button>
         </div>
+    </nav>
+    
+    <!-- Message Box for errors/success -->
+    <div id="messageBox">
+        <span id="messageText"></span>
     </div>
 
-    <script src="../../shared/js/form-utils.js"></script>
-    <script src="login.js"></script>
+    <!-- Main content area -->
+    <main>
+        <div class="auth-container">
+            <h2 id="auth-title">Welcome Back</h2>
+            
+            <form id="auth-form">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                
+                <button type="submit" class="btn-main" id="submit-btn">Login</button>
+            </form>
+            
+            <div class="divider">OR</div>
+            
+            <button class="btn-google" id="google-btn">
+                <img src="https://www.google.com/favicon.ico" alt="Google logo">
+                Sign in with Google
+            </button>
+            
+            <div class="form-links">
+                <a href="#" id="toggle-auth">Need an account? <span style="color:var(--accent); font-weight: 700;">Sign Up</span></a>
+                <a href="#" id="forgot-password">Forgot Password?</a>
+            </div>
+        </div>
+    </main>
     
- <footer>
-        © 2025 LearnComputers. All rights reserved.
-    </footer>
+    <footer>© 2025 LearnComputers | Designed with 💙 by Amphion</footer>
 
 </body>
 </html>

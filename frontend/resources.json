@@ -1967,6 +1967,12 @@
     "type": "Tool",
     "desc": "Techniques and tools for gathering public information for investigations and security.",
     "link": "https://osintframework.com/"
+  },
+  {
+      "title": "Cybersecurity- A simple step-by-step guide.",
+      "type": "Docs",
+      "link": "https://drive.google.com/file/d/1FXVrydS5jetiYCZrEX6gSjRTnkmSjw7K/view?usp=sharing",
+      "desc": "A guide about Cybersecuity for begginers and Importance, by Shyju M."
   }
 ],
 
