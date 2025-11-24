@@ -1,501 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile & Settings | LearnComputers</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-adsense-account" content="ca-pub-3650229640310116">
+  <title>Contact | LearnComputers</title>
+  
+  <!-- SweetAlert2 Library -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root {
+      --bg: #0a0f1f;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --text: #fff;
+      --accent: #00aaff;
+      --glow: 0 0 20px rgba(0, 170, 255, 0.4);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top left, #101935, #060a14);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
+    /* 🌐 NAVIGATION — identical to homepage */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 7%;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      margin: 0;
+      padding: 0;
+    }
+    nav ul li a {
+      text-decoration: none;
+      color: #ccc;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover, nav ul li a.active {
+      color: var(--accent);
+    }
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .login-btn {
+      background: var(--accent);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+    }
+    .login-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
+    }
+    #darkModeToggle {
+      background: none;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #darkModeToggle:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* 📬 CONTACT SECTION */
+    .contact-section {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 150px 20px 80px;
+      gap: 40px;
+    }
+
+    .contact-card {
+      background: var(--card-bg);
+      padding: 35px;
+      border-radius: 20px;
+      backdrop-filter: blur(15px);
+      width: 100%;
+      max-width: 600px;
+      box-shadow: var(--glow);
+    }
+
+    .contact-card h2 {
+      color: var(--accent);
+      margin-bottom: 15px;
+      font-size: 1.8rem;
+      text-shadow: 0 0 20px rgba(0,170,255,0.4);
+    }
+
+    .contact-info p {
+      color: #b0c4de;
+      line-height: 1.6;
+      font-size: 1rem;
+      margin: 8px 0;
+    }
+
+    .contact-info a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contact-info a:hover {
+      text-decoration: underline;
+    }
+
+    .contact-form form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      resize: none;
+    }
     
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SweetAlert2 for popups -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+        box-shadow: 0 0 10px rgba(0,170,255,0.3);
+        background: rgba(255,255,255,0.15);
+    }
 
-    <!-- Load Firebase SDKs and Logic -->
-    <script type="module">
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signInWithCustomToken, 
-            signInAnonymously,
-            updateProfile, 
-            deleteUser, 
-            reauthenticateWithCredential,
-            EmailAuthProvider
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    .contact-form button {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: var(--glow);
+    }
+    .contact-form button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0,170,255,0.8);
+    }
+    
+    /* SweetAlert Dark Mode Fix */
+    .swal2-popup {
+        background: #1a2035 !important;
+        color: #fff !important;
+        border: 1px solid var(--accent) !important;
+    }
+    .swal2-title { color: #fff !important; }
+    .swal2-content { color: #ccc !important; }
 
+    /* ⚡ FOOTER */
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: rgba(10,15,25,0.8);
+      backdrop-filter: blur(10px);
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
         // --- MANDATORY: Global variables provided by the environment ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // --- CORRECT FIREBASE CONFIGURATION (From your login.html) ---
-        // NOTE: Keeping this hardcoded as requested and based on your provided context.
+        // --- CORRECT FIREBASE CONFIGURATION ---
         const knownFirebaseConfig = {
             apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
             authDomain: "learncomputers-f88f1.firebaseapp.com",
             projectId: "learncomputers-f88f1",
             storageBucket: "learncomputers-f88f1.firebasestorage.app",
             messagingSenderId: "5443256661",
-            appId: "1:5443256661:web:a2230e7ee2c99749866fdc", 
+            appId: "1:5443256661:web:a2230e7ee2c96749866fdc", 
             measurementId: "G-XRFCTMV5FJ"
         };
         
-        // Initialize Firebase
-        setLogLevel('debug');
-        const app = initializeApp(knownFirebaseConfig);
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : knownFirebaseConfig;
+
+        // Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithCustomToken, 
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Initialize
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- DOM Elements ---
-        const userNameInput = document.getElementById('userName');
-        const userEmailInput = document.getElementById('userEmail');
-        const profilePhoto = document.getElementById('profilePhoto');
-        const profileHeaderName = document.getElementById('profileHeaderName');
-        const saveBtn = document.getElementById('saveBtn');
-        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-        const logoutLink = document.getElementById('logoutLink');
-        const joinedDateEl = document.getElementById('joinedDate');
-        const lastSignInEl = document.getElementById('lastSignIn');
-        const authProviderEl = document.getElementById('authProvider');
-        const userTimezoneInput = document.getElementById('userTimezone');
-        const userLanguageInput = document.getElementById('userLanguage');
-
-        let userProfileRef = null; 
-        let currentUserId = null;
-
-        // --- HELPER FUNCTIONS ---
-
-        // FIX: Function to reliably determine the display name (works for Google and Email/Pass)
-        function getDisplayName(user) {
-            if (user.displayName) {
-                return user.displayName;
-            }
-            if (user.email) {
-                // Return the part of the email before the @
-                return user.email.split('@')[0];
-            }
-            return 'Guest User';
-        }
-
-        function showMessage(icon, title, text) {
-            Swal.fire({ icon: icon, title: title, text: text, customClass: { popup: 'swal2-dark-mode' } });
-        }
+        let currentUser = null;
         
-        function formatFirebaseTimestamp(timestampString) {
-            if (!timestampString) return 'N/A';
-            try {
-                return new Date(timestampString).toLocaleString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-            } catch {
-                return timestampString;
-            }
-        }
-        
-        // --- DATA LOADING & DISPLAY ---
-
-        function loadUserData(user) {
-            // 1. Set the private document reference path
-            userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile_data/settings`);
-            currentUserId = user.uid;
-
-            // 2. Populate form fields and header using the new helper function
-            const nameToDisplay = getDisplayName(user);
-            
-            profileHeaderName.textContent = nameToDisplay;
-            userNameInput.value = nameToDisplay;
-            userEmailInput.value = user.email || 'N/A';
-            
-            // FIX: Use user's photo or generate a placeholder based on the first letter of the name
-            const placeholderText = nameToDisplay.charAt(0).toUpperCase();
-            profilePhoto.src = user.photoURL || `https://placehold.co/100x100/101935/00aaff?text=${placeholderText}`;
-            
-            // NEW FEATURE: Auth Metadata
-            joinedDateEl.textContent = formatFirebaseTimestamp(user.metadata.creationTime);
-            lastSignInEl.textContent = formatFirebaseTimestamp(user.metadata.lastSignInTime);
-            
-            const providerId = user.providerData[0]?.providerId;
-            let providerName = 'Unknown';
-            if (providerId === 'password') providerName = 'Email/Password';
-            else if (providerId === 'google.com') providerName = 'Google';
-            authProviderEl.textContent = providerName;
-
-
-            // 3. Load custom user data (bio, website, etc.) from Firestore
-            getDoc(userProfileRef).then(docSnap => {
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('userBio').value = data.bio || '';
-                    document.getElementById('userWebsite').value = data.website || '';
-                    document.getElementById('userCountry').value = data.country || '';
-                    // NEW FEATURE: Load settings
-                    userTimezoneInput.value = data.timezone || '';
-                    userLanguageInput.value = data.language || '';
-                } else {
-                    console.log("No custom profile data found in Firestore, using defaults.");
-                }
-            }).catch(error => {
-                console.error("Error fetching profile data:", error);
-            });
-        }
-
-        // --- AUTH STATE MANAGEMENT ---
-
+        // --- AUTH STATE LISTENER ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in.
-                document.getElementById('auth-status').style.display = 'none';
-                loadUserData(user);
+                currentUser = user;
+                // If logged in, update the Nav and pre-fill email
+                updateNav(true);
+                if (user.email) {
+                    const emailField = document.getElementById('email');
+                    if (emailField) emailField.value = user.email;
+                }
             } else {
-                // User is signed out, try to sign in with token or anonymously
-                if (initialAuthToken) {
-                    try {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } catch (error) {
-                        console.error("Custom token sign-in failed:", error);
-                        // Fallback to anonymous sign-in
-                        await signInAnonymously(auth);
+                // If NOT logged in, attempt anonymous login for database access
+                currentUser = null;
+                updateNav(false);
+                
+                // We need to sign in anonymously so the user has permission to write to the database
+                try {
+                    if (initialAuthToken) {
+                         await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                         await signInAnonymously(auth);
                     }
-                } else {
-                    // No token, sign in anonymously
-                    await signInAnonymously(auth);
+                } catch (e) {
+                    console.error("Anon auth failed", e);
                 }
-                // Check auth state again to see if anonymous sign-in worked
-                if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                     // If still not a real user, redirect to login page.
-                    showMessage('warning', 'Access Denied', 'Please log in to view your profile.').then(() => {
-                        window.location.replace('login.html');
+            }
+        });
+
+        function updateNav(isLoggedIn) {
+            const navActions = document.querySelector('.nav-actions');
+            if (isLoggedIn && navActions) {
+                // Change Login button to Profile if logged in
+                const loginBtn = navActions.querySelector('.login-btn');
+                if (loginBtn) {
+                    loginBtn.textContent = 'Profile';
+                    loginBtn.href = 'profile.html';
+                }
+            }
+        }
+
+        // --- FORM SUBMISSION ---
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = e.target.querySelector('button');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.textContent = 'Sending...';
+                submitBtn.disabled = true;
+
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const message = document.getElementById('message').value;
+
+                // --- LOGGING FOR DEBUGGING ---
+                const collectionPath = `artifacts/${appId}/public/data/contact_messages`;
+                console.log(`Attempting to save message to path: ${collectionPath}`);
+                
+                try {
+                    // Define collection path
+                    const messagesRef = collection(db, collectionPath);
+                    
+                    const docRef = await addDoc(messagesRef, {
+                        name: name,
+                        email: email,
+                        message: message,
+                        userId: currentUser ? currentUser.uid : 'anonymous',
+                        userEmail: currentUser ? currentUser.email : 'anonymous',
+                        timestamp: serverTimestamp()
                     });
-                }
-            }
-        });
 
-
-        // --- EVENT LISTENERS ---
-        
-        // 1. Save Changes
-        saveBtn.addEventListener('click', async () => {
-            if (!auth.currentUser || !userProfileRef) return showMessage('error', 'Error', 'User not authenticated.');
-
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Saving...';
-            
-            const newName = userNameInput.value.trim();
-            const bio = document.getElementById('userBio').value.trim();
-            const website = document.getElementById('userWebsite').value.trim();
-            const country = document.getElementById('userCountry').value.trim();
-            // NEW FEATURE: Get settings values
-            const timezone = userTimezoneInput.value;
-            const language = userLanguageInput.value;
-
-
-            try {
-                // Update Firebase Auth display name
-                if (auth.currentUser.displayName !== newName) {
-                    await updateProfile(auth.currentUser, { displayName: newName });
-                    profileHeaderName.textContent = newName; // Update header immediately
-                }
-
-                // Update custom data in Firestore (including NEW fields)
-                await setDoc(userProfileRef, {
-                    bio: bio,
-                    website: website,
-                    country: country,
-                    timezone: timezone,
-                    language: language,
-                    lastUpdated: new Date()
-                }, { merge: true });
-
-                showMessage('success', 'Saved!', 'Your profile has been updated.');
-
-            } catch (error) {
-                console.error("Error updating profile:", error);
-                showMessage('error', 'Update Failed', 'Could not save changes. Please try again.');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 Save Changes';
-            }
-        });
-        
-        // 2. Delete Account (FIXED: Mandatory Re-authentication and Redirect)
-        deleteAccountBtn.addEventListener('click', () => {
-            if (!auth.currentUser || auth.currentUser.isAnonymous) {
-                return showMessage('error', 'Error', 'Cannot delete anonymous account.');
-            }
-
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this! All your data will be lost.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ff5555',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!',
-                customClass: { popup: 'swal2-dark-mode' }
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        // Check if the provider is Email/Password (requires re-auth)
-                        const isPasswordProvider = auth.currentUser.providerData.some(p => p.providerId === 'password');
-
-                        if (isPasswordProvider) {
-                            const { value: password } = await Swal.fire({
-                                title: 'Re-authenticate',
-                                text: 'Please enter your password to confirm permanent deletion.',
-                                input: 'password',
-                                inputPlaceholder: 'Enter your password',
-                                showCancelButton: true,
-                                confirmButtonColor: '#ff5555',
-                                customClass: { popup: 'swal2-dark-mode' }
-                            });
-
-                            if (password) {
-                                // MANDATORY RE-AUTH
-                                const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
-                                await reauthenticateWithCredential(auth.currentUser, credential);
-                            } else {
-                                return; // User cancelled password input
-                            }
-                        }
-                        
-                        // Proceed with deletion
-                        await deleteUser(auth.currentUser);
-                        // FIX: Redirect after successful deletion
-                        showMessage('success', 'Deleted!', 'Your account has been permanently deleted. Redirecting to login...').then(() => {
-                            window.location.replace('login.html');
-                        });
-                        
-                    } catch (error) {
-                        console.error("Account Deletion Error:", error);
-                        let msg = 'Failed to delete account.';
-                        if (error.code === 'auth/requires-recent-login') {
-                            msg = 'Please log out and log back in, then try deleting your account again.';
-                        } else if (error.code === 'auth/wrong-password') {
-                            msg = 'Incorrect password provided.';
-                        } else if (error.code === 'auth/user-not-found') {
-                            msg = 'User session expired. Please log in again.';
-                        }
-                        showMessage('error', 'Error', msg);
+                    console.log(`✅ Message successfully saved with ID: ${docRef.id}`);
+                    
+                    Swal.fire({
+                        title: "✅ Message Sent!",
+                        text: "Thank you for reaching out. We'll reply as soon as possible.",
+                        icon: "success",
+                        confirmButtonColor: "#00aaff"
+                    });
+                    e.target.reset();
+                    
+                    // Re-fill email if logged in
+                    if (currentUser && currentUser.email) {
+                        document.getElementById('email').value = currentUser.email;
                     }
+
+                } catch (error) {
+                    console.error("❌ Error sending message: ", error);
+                    // Check for permission errors and log the user status
+                    if (error.code === 'permission-denied') {
+                        console.error("SECURITY RULE CHECK: Current User Status:", currentUser ? `UID: ${currentUser.uid}, Email: ${currentUser.email || 'N/A'}` : 'Not Authenticated');
+                    }
+                    Swal.fire({
+                        title: "Error",
+                        text: "Could not send message. Please try again later.",
+                        icon: "error",
+                        confirmButtonColor: "#d33"
+                    });
+                } finally {
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
                 }
             });
-        });
+        }
+  </script>
 
-        // 3. Logout
-        logoutLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await auth.signOut();
-                window.location.replace('login.html');
-            } catch (error) {
-                console.error("Logout Error:", error);
-                showMessage('error', 'Logout Failed', 'Could not log out.');
-            }
-        });
-
-    </script>
-
-    <style>
-        :root { --bg: #0a0f1f; --card-bg: #1a2035; --text: #e0e7ff; --accent: #00aaff; --soft-blue: #334155; }
-        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top left, #101935, #060a14); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
-        nav { position: fixed; top: 0; left: 0; width: 100%; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(20px); display: flex; justify-content: space-between; align-items: center; padding: 15px 7%; z-index: 1000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        nav .logo { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
-        nav ul { list-style: none; display: none; gap: 25px; margin: 0; padding: 0; }
-        @media (min-width: 768px) { nav ul { display: flex; } }
-        nav ul li a { text-decoration: none; color: #ccc; font-weight: 500; transition: 0.3s; }
-        nav ul li a:hover, nav ul li a.active { color: var(--accent); }
-        .nav-actions { display: flex; gap: 10px; align-items: center; }
-        .login-btn { background: var(--accent); color: white; padding: 8px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; transition: 0.3s; box-shadow: 0 0 15px rgba(0,170,255,0.6); }
-        .login-btn:hover { transform: scale(1.05); }
-
-        /* Profile Layout */
-        .profile-container { max-width: 1000px; margin: 0 auto; padding: 120px 20px 50px; }
-        .profile-card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--soft-blue); }
-        .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; padding-bottom: 25px; margin-bottom: 30px; border-bottom: 2px solid var(--soft-blue); }
-        @media (min-width: 640px) { .profile-header { flex-direction: row; text-align: left; align-items: flex-start; } }
-        
-        .profile-photo-container { position: relative; width: 100px; height: 100px; margin-bottom: 15px; }
-        @media (min-width: 640px) { .profile-photo-container { margin-right: 25px; margin-bottom: 0; } }
-
-        .profile-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 4px solid var(--accent); box-shadow: 0 0 15px rgba(0,170,255,0.6); }
-        .profile-info h1 { font-size: 2rem; font-weight: 800; color: var(--accent); margin: 0; }
-        .profile-info p { color: #aaa; margin: 5px 0 0; font-size: 1rem; }
-        .profile-info a { color: #ccc; text-decoration: underline; margin-left: 10px; }
-
-        .metadata-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(51, 65, 85, 0.5); }
-        @media (min-width: 768px) { .metadata-grid { grid-template-columns: repeat(3, 1fr); } }
-        .metadata-item { background: rgba(51, 65, 85, 0.2); padding: 10px; border-radius: 8px; font-size: 0.9rem; }
-        .metadata-item span { font-weight: 700; color: #fff; display: block; margin-top: 2px; }
-
-        /* Settings Form */
-        .settings-group { margin-bottom: 30px; padding: 20px; background: rgba(0,170,255,0.05); border-radius: 15px; border-left: 5px solid var(--accent); }
-        .settings-group h3 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 20px; border-bottom: 1px solid var(--soft-blue); padding-bottom: 10px; }
-        .form-row { display: flex; flex-direction: column; gap: 20px; }
-        @media (min-width: 640px) { .form-row { flex-direction: row; } }
-        .form-field { flex: 1; display: flex; flex-direction: column; }
-        .form-field label { font-weight: 600; margin-bottom: 8px; color: #c8e4ff; }
-        .form-field input, .form-field select, .form-field textarea { padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--soft-blue); border-radius: 8px; color: white; font-size: 1rem; outline: none; transition: 0.3s; }
-        .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,170,255,0.4); }
-        .form-field textarea { resize: vertical; min-height: 100px; }
-        .form-field select option { background: var(--card-bg); color: var(--text); }
-
-        .settings-actions { margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; }
-        .btn { padding: 12px 25px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
-        #saveBtn { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(0,170,255,0.6); }
-        #saveBtn:disabled { background: #555; opacity: 0.7; cursor: not-allowed; box-shadow: none; }
-        #saveBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,170,255,0.8); }
-        .cancel { background: #334155; color: #ccc; }
-        .cancel:hover { background: #475569; }
-        .btn-delete { background: #ff5555; color: white; padding: 8px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; border: none; }
-        .btn-delete:hover { background: #ff3333; transform: scale(1.05); }
-
-        footer { text-align: center; padding: 25px; background: rgba(10, 15, 25, 0.8); backdrop-filter: blur(10px); font-size: 0.9rem; color: #aaa; width: 100%; margin-top: 40px; }
-        /* SweetAlert2 Dark Mode */
-        .swal2-dark-mode { background: #1a2035 !important; color: #fff !important; }
-        #auth-status { color: #ff5555; text-align: center; font-size: 1.2rem; margin-top: 20px; padding: 15px; background: rgba(255,85,85,0.1); border-radius: 10px; }
-    </style>
+  <!-- No external stylesheet link needed as per request -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <nav>
-        <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="learning.html">Learn</a></li>
-            <li><a href="community.html">Community</a></li>
-            <li><a href="resources.html">Resources</a></li>
-            <li><a href="stories.html">Stories</a></li>
-            <li><a href="chatbot.html">AI Chat</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-        <div class="nav-actions">
-            <a href="#" id="logoutLink" class="login-btn">Logout</a> 
-        </div>
-    </nav>
+  <!-- 🔝 PERFECT TOP NAV -->
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="learning.html">Learn</a></li>
+      <li><a href="community.html">Community</a></li>
+      <li><a href="resources.html">Resources</a></li>
+      <li><a href="stories.html">Stories</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn">Login</a>
+      <button id="darkModeToggle">🌙</button>
+    </div>
+  </nav>
 
-    <div id="auth-status">Verifying user authentication...</div>
+  <!-- 💬 CONTACT CONTENT -->
+  <section class="contact-section">
+    <div class="contact-card contact-info">
+      <h2>📩 Get in Touch</h2>
+      <p><strong>Email:</strong> support@learncomputers.com</p>
+      <p><strong>Phone:</strong> +91 98765 43210</p>
+      <p><strong>Office:</strong> Tech Park, Thrissur, Kerala</p>
+      <p>We’re always here to guide you in your learning journey.  
+      Have questions? Drop us a message below or visit our <a href="community.html">Community</a>.</p>
+    </div>
 
-    <section class="profile-container">
-        <div class="profile-card">
-            
-            <!-- Header Section -->
-            <div class="profile-header">
-                <div class="profile-photo-container">
-                    <!-- FIX: profilePhoto will now use a placeholder if photoURL is null -->
-                    <img id="profilePhoto" class="profile-photo" src="https://placehold.co/100x100/101935/00aaff?text=U" alt="Profile Picture">
-                </div>
-                <div class="profile-info">
-                    <!-- FIX: profileHeaderName will now correctly show the name or email prefix -->
-                    <h1 id="profileHeaderName">Loading User...</h1>
-                    <p>Account Metadata</p>
-                    
-                    <!-- NEW FEATURE: Account Metadata Grid -->
-                    <div class="metadata-grid">
-                        <div class="metadata-item">
-                            Joined Date: <span id="joinedDate">N/A</span>
-                        </div>
-                        <div class="metadata-item">
-                            Last Sign In: <span id="lastSignIn">N/A</span>
-                        </div>
-                        <div class="metadata-item">
-                            Auth Provider: <span id="authProvider">N/A</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="contact-card contact-form">
+      <h2>💬 Send a Message</h2>
+      <form id="contactForm">
+        <input type="text" id="name" placeholder="Your Name" required>
+        <input type="email" id="email" placeholder="Your Email" required>
+        <textarea id="message" rows="6" placeholder="Write your message..." required></textarea>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </section>
 
-            <!-- Settings Form -->
-            <div class="settings-form">
-                
-                <div class="settings-group">
-                    <h3>👤 Account Information</h3>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="userName">Display Name</label>
-                            <input type="text" id="userName" placeholder="Your name">
-                        </div>
-                        <div class="form-field">
-                            <label for="userEmail">Email Address (Read-Only)</label>
-                            <input type="email" id="userEmail" readonly style="background: rgba(255,255,255,0.02); color:#aaa;">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-group">
-                    <h3>⚙️ Personalization</h3>
-                    <div class="form-field">
-                        <label for="userBio">Bio / About Me</label>
-                        <textarea id="userBio" placeholder="Tell us a little about your journey in computers."></textarea>
-                    </div>
-                    <div class="form-row" style="margin-top: 20px;">
-                        <div class="form-field">
-                            <label for="userWebsite">Website/Portfolio URL</label>
-                            <input type="url" id="userWebsite" placeholder="https://yourwebsite.com">
-                        </div>
-                        <div class="form-field">
-                            <label for="userCountry">Country/Region</label>
-                            <input type="text" id="userCountry" placeholder="India">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- NEW FEATURE: User Preferences -->
-                <div class="settings-group">
-                    <h3>🌍 User Preferences</h3>
-                    <div class="form-row">
-                        <div class="form-field">
-                            <label for="userTimezone">Timezone</label>
-                            <select id="userTimezone">
-                                <option value="" disabled selected>Select Timezone</option>
-                                <option value="UTC">UTC</option>
-                                <option value="EST">EST (Eastern Time)</option>
-                                <option value="PST">PST (Pacific Time)</option>
-                                <option value="IST">IST (India Standard Time)</option>
-                                <option value="GMT">GMT (Greenwich Mean Time)</option>
-                            </select>
-                        </div>
-                        <div class="form-field">
-                            <label for="userLanguage">Preferred Language</label>
-                            <select id="userLanguage">
-                                <option value="" disabled selected>Select Language</option>
-                                <option value="English">English</option>
-                                <option value="Spanish">Spanish</option>
-                                <option value="Hindi">Hindi</option>
-                                <option value="French">French</option>
-                                <option value="German">German</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="settings-actions">
-                    <button class="btn" id="saveBtn">💾 Save Changes</button>
-                    <button class="btn cancel" onclick="window.location.reload()">Cancel</button>
-                </div>
-                
-                <!-- Danger Zone (Security logic fixed) -->
-                <div class="settings-group danger-zone" style="margin-top: 50px;">
-                    <h3>🚨 Danger Zone</h3>
-                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,85,85,0.05); padding: 15px; border-radius: 10px;">
-                        <div>
-                            <p style="margin: 0; font-weight: 600; color: #fff;">Delete This Account</p>
-                            <p style="margin: 5px 0 0; font-size: 0.9rem; color: #ffcccc;">Once deleted, this action is permanent and cannot be undone. Requires password confirmation for Email/Password users.</p>
-                        </div>
-                        <button class="btn-delete" id="deleteAccountBtn">Delete Account</button>
-                    </div>
-                </div>
-                
-            </div>
-        </div>
-    </section>
-
-    <footer>© 2025 LearnComputers | Designed with 💙 by Amphion</footer>
+  <footer>© 2025 LearnComputers. All rights reserved.</footer>
 
 </body>
 </html>
