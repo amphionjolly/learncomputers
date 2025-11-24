@@ -6,627 +6,362 @@
     <title>Profile & Settings | LearnComputers</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 for popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Load Firebase SDKs and Logic -->
     <script type="module">
+        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithCustomToken, 
+            signInAnonymously,
+            updateProfile, 
+            deleteUser, 
+            reauthenticateWithCredential,
+            EmailAuthProvider
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         // --- MANDATORY: Global variables provided by the environment ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-
-        // --- CORRECT FIREBASE CONFIGURATION (Added as robust fallback to resolve API key error) ---
-        // This configuration is derived from the working login.html file.
+        
+        // --- CORRECT FIREBASE CONFIGURATION (From your login.html) ---
+        // NOTE: Keeping this hardcoded as requested and based on your provided context.
         const knownFirebaseConfig = {
             apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
             authDomain: "learncomputers-f88f1.firebaseapp.com",
             projectId: "learncomputers-f88f1",
             storageBucket: "learncomputers-f88f1.firebasestorage.app",
             messagingSenderId: "5443256661",
-            appId: "1:5443256661:web:a2230e7ee2c96749866fdc",
+            appId: "1:5443256661:web:a2230e7ee2c99749866fdc", 
             measurementId: "G-XRFCTMV5FJ"
         };
         
-        // Use environment config if available, otherwise use the known configuration
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : knownFirebaseConfig; 
-
-        // --- Firebase Imports ---
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signOut, 
-            updateProfile, 
-            updatePassword, 
-            updateEmail,
-            EmailAuthProvider,
-            reauthenticateWithCredential,
-            signInWithCustomToken, // MANDATORY
-            signInAnonymously // MANDATORY fallback
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            onSnapshot
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Set Firebase logging to debug to catch issues early
+        // Initialize Firebase
         setLogLevel('debug');
+        const app = initializeApp(knownFirebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // --- Global State Variables ---
-        let currentUser = null;
-        let isSaving = false;
-        
         // --- DOM Elements ---
-        const usernameEl = document.getElementById('username');
-        const userbioEl = document.getElementById('userbio');
-        const fullnameInput = document.getElementById('fullname');
-        const emailInput = document.getElementById('email');
-        const bioTextarea = document.getElementById('bio');
+        const userNameInput = document.getElementById('userName');
+        const userEmailInput = document.getElementById('userEmail');
+        const profilePhoto = document.getElementById('profilePhoto');
+        const profileHeaderName = document.getElementById('profileHeaderName');
         const saveBtn = document.getElementById('saveBtn');
-        const newPasswordInput = document.getElementById('new-password');
-        const currentPasswordInput = document.getElementById('current-password'); 
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const loadingIndicator = document.getElementById('loading-indicator'); // New
-        const profileContent = document.getElementById('profile-content');   // New
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        const logoutLink = document.getElementById('logoutLink');
+        const joinedDateEl = document.getElementById('joinedDate');
+        const lastSignInEl = document.getElementById('lastSignIn');
+        const authProviderEl = document.getElementById('authProvider');
+        const userTimezoneInput = document.getElementById('userTimezone');
+        const userLanguageInput = document.getElementById('userLanguage');
 
-        
-        // --- Utility Functions ---
+        let userProfileRef = null; 
+        let currentUserId = null;
 
-        /** Displays a custom message box instead of using alert() */
-        function showMessage(text, isError = false) {
-            messageText.textContent = text;
-            messageBox.style.backgroundColor = isError ? '#cc3333' : '#33cc33';
-            messageBox.style.transform = 'translateY(0)';
-            setTimeout(() => {
-                messageBox.style.transform = 'translateY(-150%)';
-            }, 5000);
+        // --- HELPER FUNCTIONS ---
+
+        // FIX: Function to reliably determine the display name (works for Google and Email/Pass)
+        function getDisplayName(user) {
+            if (user.displayName) {
+                return user.displayName;
+            }
+            if (user.email) {
+                // Return the part of the email before the @
+                return user.email.split('@')[0];
+            }
+            return 'Guest User';
         }
 
-        // --- Core Firebase Functions ---
+        function showMessage(icon, title, text) {
+            Swal.fire({ icon: icon, title: title, text: text, customClass: { popup: 'swal2-dark-mode' } });
+        }
+        
+        function formatFirebaseTimestamp(timestampString) {
+            if (!timestampString) return 'N/A';
+            try {
+                return new Date(timestampString).toLocaleString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            } catch {
+                return timestampString;
+            }
+        }
+        
+        // --- DATA LOADING & DISPLAY ---
 
-        /** Fetches user data from Firestore (Public name/bio) */
-        function subscribeToFirestoreProfile(db, uid) {
-            // Path: /artifacts/{appId}/public/data/users/{userId}
-            const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
+        function loadUserData(user) {
+            // 1. Set the private document reference path
+            userProfileRef = doc(db, `artifacts/${appId}/users/${user.uid}/profile_data/settings`);
+            currentUserId = user.uid;
+
+            // 2. Populate form fields and header using the new helper function
+            const nameToDisplay = getDisplayName(user);
             
-            // Listen for real-time changes
-            const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-                // Must ensure user object exists before accessing displayName
-                const defaultName = auth.currentUser?.displayName || 'Tech Learner'; 
+            profileHeaderName.textContent = nameToDisplay;
+            userNameInput.value = nameToDisplay;
+            userEmailInput.value = user.email || 'N/A';
+            
+            // FIX: Use user's photo or generate a placeholder based on the first letter of the name
+            const placeholderText = nameToDisplay.charAt(0).toUpperCase();
+            profilePhoto.src = user.photoURL || `https://placehold.co/100x100/101935/00aaff?text=${placeholderText}`;
+            
+            // NEW FEATURE: Auth Metadata
+            joinedDateEl.textContent = formatFirebaseTimestamp(user.metadata.creationTime);
+            lastSignInEl.textContent = formatFirebaseTimestamp(user.metadata.lastSignInTime);
+            
+            const providerId = user.providerData[0]?.providerId;
+            let providerName = 'Unknown';
+            if (providerId === 'password') providerName = 'Email/Password';
+            else if (providerId === 'google.com') providerName = 'Google';
+            authProviderEl.textContent = providerName;
+
+
+            // 3. Load custom user data (bio, website, etc.) from Firestore
+            getDoc(userProfileRef).then(docSnap => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    
-                    // Update UI with Firestore Data
-                    usernameEl.textContent = data.fullName || defaultName;
-                    userbioEl.textContent = data.bio || 'No bio set.';
-                    fullnameInput.value = data.fullName || defaultName;
-                    bioTextarea.value = data.bio || '';
-
-                    // Display the full user ID (for multi-user app identification)
-                    document.getElementById('userIdDisplay').textContent = uid;
+                    document.getElementById('userBio').value = data.bio || '';
+                    document.getElementById('userWebsite').value = data.website || '';
+                    document.getElementById('userCountry').value = data.country || '';
+                    // NEW FEATURE: Load settings
+                    userTimezoneInput.value = data.timezone || '';
+                    userLanguageInput.value = data.language || '';
                 } else {
-                    // Create default profile data if none exists
-                    const initialData = { 
-                        fullName: defaultName, 
-                        bio: 'Aspiring developer.',
-                        createdAt: new Date().toISOString()
-                    };
-                    // Use setDoc with merge:true to avoid overwriting
-                    setDoc(userDocRef, initialData, { merge: true }); 
-                    // Immediately update UI while doc is being created
-                    usernameEl.textContent = initialData.fullName;
-                    userbioEl.textContent = initialData.bio;
-                    fullnameInput.value = initialData.fullName;
-                    bioTextarea.value = initialData.bio;
-                    document.getElementById('userIdDisplay').textContent = uid;
+                    console.log("No custom profile data found in Firestore, using defaults.");
                 }
-            }, (error) => {
-                 console.error("Firestore subscription failed:", error);
-                 showMessage("Error loading profile data. See console for details.", true);
-            });
-            return unsubscribe;
-        }
-        
-        /** Loads Authentication user data into the form */
-        function loadAuthData(user) {
-            emailInput.value = user.email || 'N/A (Provider Login)';
-            // Disable email change if no email is available OR if logged in via a non-password provider
-            emailInput.disabled = !user.email || user.providerData.some(p => p.providerId !== 'password');
-
-            // If user has a profile photo from provider, use it (optional)
-            const photoEl = document.getElementById('profile-photo');
-            if (user.photoURL) {
-                photoEl.src = user.photoURL;
-                photoEl.onerror = () => photoEl.src = 'https://placehold.co/120x120/00aaff/ffffff?text=U'; // Fallback
-            }
-        }
-        
-        /** Handles saving all profile and security changes */
-        async function saveChanges(db, auth) {
-            if (isSaving) return;
-            isSaving = true;
-            saveBtn.textContent = 'Saving...';
-            saveBtn.disabled = true;
-
-            const newFullName = fullnameInput.value.trim();
-            const newBio = bioTextarea.value.trim();
-            const newEmail = emailInput.value.trim();
-            const newPassword = newPasswordInput.value;
-            const currentPassword = currentPasswordInput.value; 
-
-            try {
-                // 1. Update Display Name (in Firebase Auth)
-                if (newFullName !== currentUser.displayName) {
-                    await updateProfile(currentUser, { displayName: newFullName });
-                }
-                
-                // 2. Update Firestore Profile (Name/Bio for Community)
-                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
-                await setDoc(userDocRef, { fullName: newFullName, bio: newBio }, { merge: true });
-                
-                let securityAction = false;
-                
-                // 3. Check for Security Actions (Email or Password change)
-                if (
-                    (newEmail.length > 0 && newEmail !== currentUser.email && !emailInput.disabled) || 
-                    (newPassword.length > 0)
-                ) {
-                    if (!currentPassword) {
-                        showMessage('Error: Current password is required to change email or password.', true);
-                        return; // Exit function early
-                    }
-                    
-                    // Re-authenticate user before attempting sensitive updates
-                    // Note: This relies on the user having an email/password account.
-                    const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
-                    await reauthenticateWithCredential(currentUser, credential);
-                    securityAction = true;
-                }
-
-                // 4. Update Email
-                if (securityAction && newEmail.length > 0 && newEmail !== currentUser.email && !emailInput.disabled) {
-                    await updateEmail(currentUser, newEmail);
-                }
-
-                // 5. Update Password
-                if (securityAction && newPassword.length >= 6) {
-                    await updatePassword(currentUser, newPassword);
-                    newPasswordInput.value = ''; // Clear fields on success
-                    currentPasswordInput.value = '';
-                } else if (securityAction && newPassword.length > 0 && newPassword.length < 6) {
-                    showMessage('Error: Password must be at least 6 characters long.', true);
-                    return; // Exit function early
-                }
-
-                showMessage('✅ Profile details saved successfully!', false);
-                
-            } catch (error) {
-                console.error("Error saving profile:", error);
-                let errorMessage = error.message;
-                if (error.code === 'auth/requires-recent-login') {
-                    errorMessage = 'Please log out and log back in to perform this security action (re-authentication needed).';
-                } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    errorMessage = 'Incorrect current password provided. Please try again.';
-                } else if (error.code === 'auth/email-already-in-use') {
-                    errorMessage = 'This email is already linked to another account.';
-                } else if (error.code === 'auth/popup-closed-by-user') {
-                    // Ignore, common for providers
-                    return;
-                }
-                showMessage(`Error: ${errorMessage}`, true);
-            } finally {
-                isSaving = false;
-                saveBtn.textContent = '💾 Save Changes';
-                saveBtn.disabled = false;
-            }
-        }
-        
-        /** Handles user logout */
-        function handleLogout(auth) {
-            signOut(auth).then(() => {
-                // After logout, redirect to the login page
-                window.location.href = '/login.html'; 
-            }).catch((error) => {
-                console.error("Logout failed:", error);
-                showMessage('Logout failed. Please try again.', true);
+            }).catch(error => {
+                console.error("Error fetching profile data:", error);
             });
         }
-        
-        // --- Initialization and Event Listeners Setup ---
 
-        let auth, db;
-        let unsubscribeProfile; // To hold the Firestore unsubscribe function
+        // --- AUTH STATE MANAGEMENT ---
 
-        async function initializeFirebaseAndAuth() {
-            try {
-                // Initialize services
-                const app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                // MANDATORY: Perform initial sign-in
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in.
+                document.getElementById('auth-status').style.display = 'none';
+                loadUserData(user);
+            } else {
+                // User is signed out, try to sign in with token or anonymously
                 if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (error) {
+                        console.error("Custom token sign-in failed:", error);
+                        // Fallback to anonymous sign-in
+                        await signInAnonymously(auth);
+                    }
                 } else {
+                    // No token, sign in anonymously
                     await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
+                }
+                // Check auth state again to see if anonymous sign-in worked
+                if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                     // If still not a real user, redirect to login page.
+                    showMessage('warning', 'Access Denied', 'Please log in to view your profile.').then(() => {
+                        window.location.replace('login.html');
+                    });
+                }
+            }
+        });
+
+
+        // --- EVENT LISTENERS ---
+        
+        // 1. Save Changes
+        saveBtn.addEventListener('click', async () => {
+            if (!auth.currentUser || !userProfileRef) return showMessage('error', 'Error', 'User not authenticated.');
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            const newName = userNameInput.value.trim();
+            const bio = document.getElementById('userBio').value.trim();
+            const website = document.getElementById('userWebsite').value.trim();
+            const country = document.getElementById('userCountry').value.trim();
+            // NEW FEATURE: Get settings values
+            const timezone = userTimezoneInput.value;
+            const language = userLanguageInput.value;
+
+
+            try {
+                // Update Firebase Auth display name
+                if (auth.currentUser.displayName !== newName) {
+                    await updateProfile(auth.currentUser, { displayName: newName });
+                    profileHeaderName.textContent = newName; // Update header immediately
                 }
 
-                // Attach permanent Auth State Listener
-                onAuthStateChanged(auth, (user) => {
-                    // Hide loading indicator as we have an auth status
-                    loadingIndicator.classList.add('hidden');
-                    profileContent.classList.remove('hidden');
+                // Update custom data in Firestore (including NEW fields)
+                await setDoc(userProfileRef, {
+                    bio: bio,
+                    website: website,
+                    country: country,
+                    timezone: timezone,
+                    language: language,
+                    lastUpdated: new Date()
+                }, { merge: true });
 
-                    if (user) {
-                        // User is authenticated
-                        currentUser = user;
-                        loadAuthData(user);
-                        
-                        // Clear previous listener if it exists
-                        if (unsubscribeProfile) {
-                            unsubscribeProfile();
-                        }
-                        // Start Firestore real-time listener
-                        unsubscribeProfile = subscribeToFirestoreProfile(db, user.uid);
-                    } else {
-                        // User is NOT authenticated, redirect
-                        window.location.href = '/login.html'; 
-                    }
-                });
-                
-                // Attach event listeners after services are initialized
-                saveBtn.addEventListener('click', () => saveChanges(db, auth));
-                document.getElementById('logoutBtn').addEventListener('click', () => handleLogout(auth));
-                document.getElementById('darkModeToggle').addEventListener('click', () => {
-                    document.body.classList.toggle('dark');
-                });
-
+                showMessage('success', 'Saved!', 'Your profile has been updated.');
 
             } catch (error) {
-                console.error("FATAL: Firebase Initialization/Sign-in Error:", error);
-                showMessage("Failed to initialize Firebase or sign in. Check console.", true);
-                loadingIndicator.classList.add('hidden');
+                console.error("Error updating profile:", error);
+                showMessage('error', 'Update Failed', 'Could not save changes. Please try again.');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Changes';
             }
-        }
+        });
+        
+        // 2. Delete Account (FIXED: Mandatory Re-authentication and Redirect)
+        deleteAccountBtn.addEventListener('click', () => {
+            if (!auth.currentUser || auth.currentUser.isAnonymous) {
+                return showMessage('error', 'Error', 'Cannot delete anonymous account.');
+            }
 
-        // Start the application initialization
-        initializeFirebaseAndAuth();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this! All your data will be lost.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ff5555',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                customClass: { popup: 'swal2-dark-mode' }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        // Check if the provider is Email/Password (requires re-auth)
+                        const isPasswordProvider = auth.currentUser.providerData.some(p => p.providerId === 'password');
+
+                        if (isPasswordProvider) {
+                            const { value: password } = await Swal.fire({
+                                title: 'Re-authenticate',
+                                text: 'Please enter your password to confirm permanent deletion.',
+                                input: 'password',
+                                inputPlaceholder: 'Enter your password',
+                                showCancelButton: true,
+                                confirmButtonColor: '#ff5555',
+                                customClass: { popup: 'swal2-dark-mode' }
+                            });
+
+                            if (password) {
+                                // MANDATORY RE-AUTH
+                                const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+                                await reauthenticateWithCredential(auth.currentUser, credential);
+                            } else {
+                                return; // User cancelled password input
+                            }
+                        }
+                        
+                        // Proceed with deletion
+                        await deleteUser(auth.currentUser);
+                        // FIX: Redirect after successful deletion
+                        showMessage('success', 'Deleted!', 'Your account has been permanently deleted. Redirecting to login...').then(() => {
+                            window.location.replace('login.html');
+                        });
+                        
+                    } catch (error) {
+                        console.error("Account Deletion Error:", error);
+                        let msg = 'Failed to delete account.';
+                        if (error.code === 'auth/requires-recent-login') {
+                            msg = 'Please log out and log back in, then try deleting your account again.';
+                        } else if (error.code === 'auth/wrong-password') {
+                            msg = 'Incorrect password provided.';
+                        } else if (error.code === 'auth/user-not-found') {
+                            msg = 'User session expired. Please log in again.';
+                        }
+                        showMessage('error', 'Error', msg);
+                    }
+                }
+            });
+        });
+
+        // 3. Logout
+        logoutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await auth.signOut();
+                window.location.replace('login.html');
+            } catch (error) {
+                console.error("Logout Error:", error);
+                showMessage('error', 'Logout Failed', 'Could not log out.');
+            }
+        });
 
     </script>
 
     <style>
-        :root {
-            --bg: #0a0f1f;
-            --card-bg: rgba(255, 255, 255, 0.08);
-            --text: #fff;
-            --accent: #00aaff;
-            --error: #ff5555;
-        }
+        :root { --bg: #0a0f1f; --card-bg: #1a2035; --text: #e0e7ff; --accent: #00aaff; --soft-blue: #334155; }
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top left, #101935, #060a14); color: var(--text); margin: 0; padding: 0; min-height: 100vh; }
+        nav { position: fixed; top: 0; left: 0; width: 100%; background: rgba(10, 15, 30, 0.7); backdrop-filter: blur(20px); display: flex; justify-content: space-between; align-items: center; padding: 15px 7%; z-index: 1000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        nav .logo { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        nav ul { list-style: none; display: none; gap: 25px; margin: 0; padding: 0; }
+        @media (min-width: 768px) { nav ul { display: flex; } }
+        nav ul li a { text-decoration: none; color: #ccc; font-weight: 500; transition: 0.3s; }
+        nav ul li a:hover, nav ul li a.active { color: var(--accent); }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
+        .login-btn { background: var(--accent); color: white; padding: 8px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; transition: 0.3s; box-shadow: 0 0 15px rgba(0,170,255,0.6); }
+        .login-btn:hover { transform: scale(1.05); }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top left, #101935, #060a14);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
-
-        /* Utility Class */
-        .hidden {
-            display: none !important;
-        }
+        /* Profile Layout */
+        .profile-container { max-width: 1000px; margin: 0 auto; padding: 120px 20px 50px; }
+        .profile-card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--soft-blue); }
+        .profile-header { display: flex; flex-direction: column; align-items: center; text-align: center; padding-bottom: 25px; margin-bottom: 30px; border-bottom: 2px solid var(--soft-blue); }
+        @media (min-width: 640px) { .profile-header { flex-direction: row; text-align: left; align-items: flex-start; } }
         
-        /* 🔄 Loading Indicator Styles */
-        #loading-indicator {
-            margin-top: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 400px;
-        }
+        .profile-photo-container { position: relative; width: 100px; height: 100px; margin-bottom: 15px; }
+        @media (min-width: 640px) { .profile-photo-container { margin-right: 25px; margin-bottom: 0; } }
 
-        .spinner {
-            border: 8px solid rgba(255, 255, 255, 0.1);
-            border-top: 8px solid var(--accent);
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
+        .profile-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 4px solid var(--accent); box-shadow: 0 0 15px rgba(0,170,255,0.6); }
+        .profile-info h1 { font-size: 2rem; font-weight: 800; color: var(--accent); margin: 0; }
+        .profile-info p { color: #aaa; margin: 5px 0 0; font-size: 1rem; }
+        .profile-info a { color: #ccc; text-decoration: underline; margin-left: 10px; }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .metadata-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 15px; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(51, 65, 85, 0.5); }
+        @media (min-width: 768px) { .metadata-grid { grid-template-columns: repeat(3, 1fr); } }
+        .metadata-item { background: rgba(51, 65, 85, 0.2); padding: 10px; border-radius: 8px; font-size: 0.9rem; }
+        .metadata-item span { font-weight: 700; color: #fff; display: block; margin-top: 2px; }
 
+        /* Settings Form */
+        .settings-group { margin-bottom: 30px; padding: 20px; background: rgba(0,170,255,0.05); border-radius: 15px; border-left: 5px solid var(--accent); }
+        .settings-group h3 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 20px; border-bottom: 1px solid var(--soft-blue); padding-bottom: 10px; }
+        .form-row { display: flex; flex-direction: column; gap: 20px; }
+        @media (min-width: 640px) { .form-row { flex-direction: row; } }
+        .form-field { flex: 1; display: flex; flex-direction: column; }
+        .form-field label { font-weight: 600; margin-bottom: 8px; color: #c8e4ff; }
+        .form-field input, .form-field select, .form-field textarea { padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--soft-blue); border-radius: 8px; color: white; font-size: 1rem; outline: none; transition: 0.3s; }
+        .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--accent); box-shadow: 0 0 8px rgba(0,170,255,0.4); }
+        .form-field textarea { resize: vertical; min-height: 100px; }
+        .form-field select option { background: var(--card-bg); color: var(--text); }
 
-        /* 🌐 NAVIGATION */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(10, 15, 30, 0.7);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 7%;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+        .settings-actions { margin-top: 30px; display: flex; gap: 15px; justify-content: flex-end; }
+        .btn { padding: 12px 25px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        #saveBtn { background: var(--accent); color: white; box-shadow: 0 4px 15px rgba(0,170,255,0.6); }
+        #saveBtn:disabled { background: #555; opacity: 0.7; cursor: not-allowed; box-shadow: none; }
+        #saveBtn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,170,255,0.8); }
+        .cancel { background: #334155; color: #ccc; }
+        .cancel:hover { background: #475569; }
+        .btn-delete { background: #ff5555; color: white; padding: 8px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.3s; border: none; }
+        .btn-delete:hover { background: #ff3333; transform: scale(1.05); }
 
-        nav .logo {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 25px;
-            margin: 0;
-            padding: 0;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #ccc;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-
-        nav ul li a:hover, nav ul li a.active {
-            color: var(--accent);
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        /* Styled Logout Button */
-        .btn-logout {
-            background: #ff5555;
-            color: white;
-            padding: 8px 18px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            border: none;
-            box-shadow: 0 0 15px rgba(255,85,85,0.6);
-        }
-
-        .btn-logout:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(255,85,85,0.8);
-        }
-
-        #darkModeToggle {
-            background: none;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            border-radius: 10px;
-            padding: 6px 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        #darkModeToggle:hover {
-            background: var(--accent);
-            color: white;
-        }
-
-        /* 🧍 PROFILE SECTION */
-        .profile-section {
-            margin-top: 120px;
-            padding: 60px 10%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 50px;
-        }
-
-        .profile-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 25px;
-            padding: 40px;
-            max-width: 900px;
-            width: 100%;
-            box-shadow: 0 0 35px rgba(0,170,255,0.6);
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            margin-bottom: 20px;
-        }
-
-        .profile-header img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            border: 3px solid var(--accent);
-            box-shadow: 0 0 25px rgba(0,170,255,0.6);
-        }
-
-        .profile-header div {
-            flex: 1;
-        }
-
-        .profile-header h2 {
-            margin: 0;
-            color: var(--accent);
-            font-size: 1.8rem;
-        }
-
-        .profile-header p {
-            color: #b0c4de;
-            margin-top: 5px;
-            font-size: 1rem;
-        }
-        
-        .user-id-info {
-            font-size: 0.75rem;
-            color: #55aaff;
-            margin-top: 10px;
-            word-break: break-all;
-        }
-
-        .edit-photo {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 6px 14px;
-            cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-            opacity: 0.5;
-            transition: 0.3s;
-        }
-
-        /* ⚙️ SETTINGS AREA */
-        .settings-area {
-            margin-top: 40px;
-        }
-
-        .settings-group {
-            margin-bottom: 35px;
-            border-left: 3px solid var(--accent);
-            padding-left: 20px;
-        }
-
-        .settings-group h3 {
-            color: var(--accent);
-            font-size: 1.4rem;
-            margin-bottom: 15px;
-        }
-
-        .settings-field {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-
-        .settings-field label {
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #c8e4ff;
-        }
-
-        .settings-field input, 
-        .settings-field select, 
-        .settings-field textarea {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(0,170,255,0.3);
-            border-radius: 10px;
-            padding: 10px 14px;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .settings-field input:disabled {
-            background: rgba(255,255,255,0.02);
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        .settings-field input:focus, 
-        .settings-field select:focus, 
-        .settings-field textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 15px rgba(0,170,255,0.4);
-        }
-
-        .settings-actions {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 25px;
-        }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 10px 22px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 0 15px rgba(0,170,255,0.6);
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 0 25px rgba(0,170,255,0.8);
-        }
-
-        .btn.cancel {
-            background: #444; /* Changed to dark grey for a softer cancel action */
-            box-shadow: none;
-        }
-
-        /* Message Box */
-        #messageBox {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translate(-50%, -150%);
-            padding: 15px 25px;
-            border-radius: 0 0 15px 15px;
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            transition: transform 0.5s ease-in-out, background-color 0.3s;
-            z-index: 2000;
-        }
-
-        @media (max-width: 768px) {
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-            }
-        }
-        
-        footer {
-            text-align: center;
-            padding: 25px;
-            background: rgba(10, 15, 25, 0.8);
-            backdrop-filter: blur(10px);
-            font-size: 0.9rem;
-            color: #aaa;
-            margin-top: 80px;
-            width: 100%;
-        }
-
+        footer { text-align: center; padding: 25px; background: rgba(10, 15, 25, 0.8); backdrop-filter: blur(10px); font-size: 0.9rem; color: #aaa; width: 100%; margin-top: 40px; }
+        /* SweetAlert2 Dark Mode */
+        .swal2-dark-mode { background: #1a2035 !important; color: #fff !important; }
+        #auth-status { color: #ff5555; text-align: center; font-size: 1.2rem; margin-top: 20px; padding: 15px; background: rgba(255,85,85,0.1); border-radius: 10px; }
     </style>
 </head>
 <body>
-
-    <!-- Message Box (Added for functional messages) -->
-    <div id="messageBox">
-        <span id="messageText"></span>
-    </div>
-
-    <!-- 🔹 Navbar -->
     <nav>
         <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
         <ul>
@@ -640,106 +375,122 @@
             <li><a href="contact.html">Contact</a></li>
         </ul>
         <div class="nav-actions">
-            <!-- Logout button now triggers JS function -->
-            <button id="logoutBtn" class="btn-logout">Logout</button> 
-            <button id="darkModeToggle">🌙</button>
+            <a href="#" id="logoutLink" class="login-btn">Logout</a> 
         </div>
     </nav>
 
-    <!-- 👤 PROFILE + SETTINGS -->
-    <section class="profile-section">
-        
-        <!-- Loading Indicator - Shown until auth state is confirmed -->
-        <div id="loading-indicator">
-            <div class="spinner"></div>
-            <p style="font-size: 1.2rem; color: #ccc;">Checking your authentication status...</p>
-        </div>
+    <div id="auth-status">Verifying user authentication...</div>
 
-        <!-- Main Profile Content - Hidden by default -->
-        <div class="profile-card hidden" id="profile-content">
+    <section class="profile-container">
+        <div class="profile-card">
+            
+            <!-- Header Section -->
             <div class="profile-header">
-                <!-- Using a simple placeholder as per security best practice -->
-                <img src="https://placehold.co/120x120/00aaff/ffffff?text=U" alt="Profile Picture" id="profile-photo"> 
-                <div>
-                    <!-- Content updated by JS -->
-                    <h2 id="username">Loading...</h2>
-                    <p id="userbio">Checking user status...</p>
-                    <button class="edit-photo" disabled>Change Photo (Pro)</button>
+                <div class="profile-photo-container">
+                    <!-- FIX: profilePhoto will now use a placeholder if photoURL is null -->
+                    <img id="profilePhoto" class="profile-photo" src="https://placehold.co/100x100/101935/00aaff?text=U" alt="Profile Picture">
+                </div>
+                <div class="profile-info">
+                    <!-- FIX: profileHeaderName will now correctly show the name or email prefix -->
+                    <h1 id="profileHeaderName">Loading User...</h1>
+                    <p>Account Metadata</p>
+                    
+                    <!-- NEW FEATURE: Account Metadata Grid -->
+                    <div class="metadata-grid">
+                        <div class="metadata-item">
+                            Joined Date: <span id="joinedDate">N/A</span>
+                        </div>
+                        <div class="metadata-item">
+                            Last Sign In: <span id="lastSignIn">N/A</span>
+                        </div>
+                        <div class="metadata-item">
+                            Auth Provider: <span id="authProvider">N/A</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <!-- User ID Display (Crucial for multi-user apps) -->
-            <p class="user-id-info">User ID (Public Identifier): <span id="userIdDisplay">Loading...</span></p>
 
-            <div class="settings-area">
-                <!-- Account Info -->
+            <!-- Settings Form -->
+            <div class="settings-form">
+                
                 <div class="settings-group">
-                    <h3>👤 Account Info</h3>
-                    <div class="settings-field">
-                        <label for="fullname">Full Name (Display Name)</label>
-                        <input type="text" id="fullname" value="">
-                    </div>
-                    <div class="settings-field">
-                        <label for="email">Email</label>
-                        <!-- Email is disabled by JS if it cannot be changed -->
-                        <input type="email" id="email" value="" disabled> 
-                    </div>
-                    <div class="settings-field">
-                        <label for="bio">Bio (Saved for Community Profile)</label>
-                        <textarea id="bio" rows="3"></textarea>
+                    <h3>👤 Account Information</h3>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="userName">Display Name</label>
+                            <input type="text" id="userName" placeholder="Your name">
+                        </div>
+                        <div class="form-field">
+                            <label for="userEmail">Email Address (Read-Only)</label>
+                            <input type="email" id="userEmail" readonly style="background: rgba(255,255,255,0.02); color:#aaa;">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Preferences (Static fields for now) -->
                 <div class="settings-group">
-                    <h3>🎨 Preferences</h3>
-                    <div class="settings-field">
-                        <label for="theme">Theme</label>
-                        <select id="theme">
-                            <option>Dark (Default)</option>
-                            <option>Light</option>
-                            <option>System</option>
-                        </select>
+                    <h3>⚙️ Personalization</h3>
+                    <div class="form-field">
+                        <label for="userBio">Bio / About Me</label>
+                        <textarea id="userBio" placeholder="Tell us a little about your journey in computers."></textarea>
                     </div>
-                    <div class="settings-field">
-                        <label for="notifications">Notifications</label>
-                        <select id="notifications">
-                            <option>All</option>
-                            <option>Only Important</option>
-                            <option>None</option>
-                        </select>
+                    <div class="form-row" style="margin-top: 20px;">
+                        <div class="form-field">
+                            <label for="userWebsite">Website/Portfolio URL</label>
+                            <input type="url" id="userWebsite" placeholder="https://yourwebsite.com">
+                        </div>
+                        <div class="form-field">
+                            <label for="userCountry">Country/Region</label>
+                            <input type="text" id="userCountry" placeholder="India">
+                        </div>
                     </div>
                 </div>
-
-                <!-- Security (Updated to be functional) -->
+                
+                <!-- NEW FEATURE: User Preferences -->
                 <div class="settings-group">
-                    <h3>🔒 Security</h3>
-                    <p style="color: #ccc; font-size: 0.9em; margin-bottom: 20px;">
-                        To change your email or password, you must enter your current password for security verification.
-                    </p>
-                    <div class="settings-field">
-                        <label for="current-password">Current Password (Required for Email/Password Change)</label>
-                        <input type="password" id="current-password" placeholder="Verify current password">
-                    </div>
-                    <div class="settings-field">
-                        <label for="new-password">New Password</label>
-                        <!-- ID changed to new-password to match JS logic -->
-                        <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
-                    </div>
-                    <div class="settings-field">
-                        <label for="twofactor">Two-Factor Authentication (UI Only)</label>
-                        <select id="twofactor">
-                            <option>Disabled</option>
-                            <option>Enabled (Pro Feature)</option>
-                        </select>
+                    <h3>🌍 User Preferences</h3>
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="userTimezone">Timezone</label>
+                            <select id="userTimezone">
+                                <option value="" disabled selected>Select Timezone</option>
+                                <option value="UTC">UTC</option>
+                                <option value="EST">EST (Eastern Time)</option>
+                                <option value="PST">PST (Pacific Time)</option>
+                                <option value="IST">IST (India Standard Time)</option>
+                                <option value="GMT">GMT (Greenwich Mean Time)</option>
+                            </select>
+                        </div>
+                        <div class="form-field">
+                            <label for="userLanguage">Preferred Language</label>
+                            <select id="userLanguage">
+                                <option value="" disabled selected>Select Language</option>
+                                <option value="English">English</option>
+                                <option value="Spanish">Spanish</option>
+                                <option value="Hindi">Hindi</option>
+                                <option value="French">French</option>
+                                <option value="German">German</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-
+                
                 <div class="settings-actions">
                     <button class="btn" id="saveBtn">💾 Save Changes</button>
-                    <!-- Reloads the page to discard unsaved changes -->
                     <button class="btn cancel" onclick="window.location.reload()">Cancel</button>
                 </div>
+                
+                <!-- Danger Zone (Security logic fixed) -->
+                <div class="settings-group danger-zone" style="margin-top: 50px;">
+                    <h3>🚨 Danger Zone</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,85,85,0.05); padding: 15px; border-radius: 10px;">
+                        <div>
+                            <p style="margin: 0; font-weight: 600; color: #fff;">Delete This Account</p>
+                            <p style="margin: 5px 0 0; font-size: 0.9rem; color: #ffcccc;">Once deleted, this action is permanent and cannot be undone. Requires password confirmation for Email/Password users.</p>
+                        </div>
+                        <button class="btn-delete" id="deleteAccountBtn">Delete Account</button>
+                    </div>
+                </div>
+                
             </div>
         </div>
     </section>

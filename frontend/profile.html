@@ -6,14 +6,19 @@
     <title>Profile & Settings | LearnComputers</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     
+    <!-- SweetAlert2 for popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <!-- Load Firebase SDKs and Logic -->
     <script type="module">
+
+        
         // --- MANDATORY: Global variables provided by the environment ---
+        // We use these to connect to the correct Firebase project securely.
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        // --- CORRECT FIREBASE CONFIGURATION (Added as robust fallback to resolve API key error) ---
-        // This configuration is derived from the working login.html file.
+        // --- CORRECT FIREBASE CONFIGURATION (From your login.html) ---
         const knownFirebaseConfig = {
             apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
             authDomain: "learncomputers-f88f1.firebaseapp.com",
@@ -24,7 +29,8 @@
             measurementId: "G-XRFCTMV5FJ"
         };
         
-        // Use environment config if available, otherwise use the known configuration
+        
+        // Use environment config if available, otherwise use our known config
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : knownFirebaseConfig; 
@@ -40,14 +46,15 @@
             updateEmail,
             EmailAuthProvider,
             reauthenticateWithCredential,
-            signInWithCustomToken, // MANDATORY
-            signInAnonymously // MANDATORY fallback
+            signInWithCustomToken, // For the environment
+            deleteUser // NEW: For Delete Account
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
             setDoc, 
-            onSnapshot
+            onSnapshot,
+            deleteDoc // NEW: For Delete Account
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set Firebase logging to debug to catch issues early
@@ -68,8 +75,9 @@
         const currentPasswordInput = document.getElementById('current-password'); 
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
-        const loadingIndicator = document.getElementById('loading-indicator'); // New
-        const profileContent = document.getElementById('profile-content');   // New
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const profileContent = document.getElementById('profile-content');
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn'); // NEW
 
         
         // --- Utility Functions ---
@@ -83,18 +91,32 @@
                 messageBox.style.transform = 'translateY(-150%)';
             }, 5000);
         }
+        
+        /** Extracts the name from an email (e.g., test@gmail.com -> test) */
+        function getNameFromEmail(email) {
+            if (!email) return 'Tech Learner';
+            const atIndex = email.indexOf('@');
+            if (atIndex === -1) return email; // Not a valid email, but return it anyway
+            return email.substring(0, atIndex);
+        }
 
         // --- Core Firebase Functions ---
 
         /** Fetches user data from Firestore (Public name/bio) */
-        function subscribeToFirestoreProfile(db, uid) {
+        function subscribeToFirestoreProfile(db, user) {
+            const uid = user.uid;
             // Path: /artifacts/{appId}/public/data/users/{userId}
             const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', uid);
             
             // Listen for real-time changes
             const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-                // Must ensure user object exists before accessing displayName
-                const defaultName = auth.currentUser?.displayName || 'Tech Learner'; 
+                
+                // --- THIS IS THE FIX for the name bug ---
+                // 1. Get name from Auth (Google)
+                // 2. If no Auth name, get from Email
+                // 3. If no Email, use default
+                const defaultName = user.displayName || getNameFromEmail(user.email) || 'Tech Learner';
+                
                 if (docSnap.exists()) {
                     const data = docSnap.data();
                     
@@ -103,9 +125,6 @@
                     userbioEl.textContent = data.bio || 'No bio set.';
                     fullnameInput.value = data.fullName || defaultName;
                     bioTextarea.value = data.bio || '';
-
-                    // Display the full user ID (for multi-user app identification)
-                    document.getElementById('userIdDisplay').textContent = uid;
                 } else {
                     // Create default profile data if none exists
                     const initialData = { 
@@ -113,15 +132,16 @@
                         bio: 'Aspiring developer.',
                         createdAt: new Date().toISOString()
                     };
-                    // Use setDoc with merge:true to avoid overwriting
                     setDoc(userDocRef, initialData, { merge: true }); 
-                    // Immediately update UI while doc is being created
+                    
+                    // Immediately update UI
                     usernameEl.textContent = initialData.fullName;
                     userbioEl.textContent = initialData.bio;
                     fullnameInput.value = initialData.fullName;
                     bioTextarea.value = initialData.bio;
-                    document.getElementById('userIdDisplay').textContent = uid;
                 }
+                // Always show the User ID
+                document.getElementById('userIdDisplay').textContent = uid;
             }, (error) => {
                  console.error("Firestore subscription failed:", error);
                  showMessage("Error loading profile data. See console for details.", true);
@@ -131,11 +151,11 @@
         
         /** Loads Authentication user data into the form */
         function loadAuthData(user) {
+            // --- THIS IS THE FIX for the email bug ---
+            // It now correctly reads user.email
             emailInput.value = user.email || 'N/A (Provider Login)';
-            // Disable email change if no email is available OR if logged in via a non-password provider
             emailInput.disabled = !user.email || user.providerData.some(p => p.providerId !== 'password');
 
-            // If user has a profile photo from provider, use it (optional)
             const photoEl = document.getElementById('profile-photo');
             if (user.photoURL) {
                 photoEl.src = user.photoURL;
@@ -144,8 +164,8 @@
         }
         
         /** Handles saving all profile and security changes */
-        async function saveChanges(db, auth) {
-            if (isSaving) return;
+        async function saveChanges(db) {
+            if (isSaving || !currentUser) return;
             isSaving = true;
             saveBtn.textContent = 'Saving...';
             saveBtn.disabled = true;
@@ -173,13 +193,16 @@
                     (newEmail.length > 0 && newEmail !== currentUser.email && !emailInput.disabled) || 
                     (newPassword.length > 0)
                 ) {
+                    if (!currentUser.email) {
+                         showMessage('Error: Cannot change email/password for provider accounts.', true);
+                         return;
+                    }
                     if (!currentPassword) {
                         showMessage('Error: Current password is required to change email or password.', true);
                         return; // Exit function early
                     }
                     
                     // Re-authenticate user before attempting sensitive updates
-                    // Note: This relies on the user having an email/password account.
                     const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
                     await reauthenticateWithCredential(currentUser, credential);
                     securityAction = true;
@@ -211,9 +234,6 @@
                     errorMessage = 'Incorrect current password provided. Please try again.';
                 } else if (error.code === 'auth/email-already-in-use') {
                     errorMessage = 'This email is already linked to another account.';
-                } else if (error.code === 'auth/popup-closed-by-user') {
-                    // Ignore, common for providers
-                    return;
                 }
                 showMessage(`Error: ${errorMessage}`, true);
             } finally {
@@ -226,12 +246,86 @@
         /** Handles user logout */
         function handleLogout(auth) {
             signOut(auth).then(() => {
-                // After logout, redirect to the login page
-                window.location.href = '/frontend/login.html'; 
+                window.location.href = '/frontend/login.html'; // Redirect to login page
             }).catch((error) => {
                 console.error("Logout failed:", error);
                 showMessage('Logout failed. Please try again.', true);
             });
+        }
+        
+        /** --- NEW: Handles Account Deletion --- */
+        async function handleDeleteAccount(db, auth) {
+            if (!currentUser) return;
+
+            // Step 1: Confirm with user
+            const { value: confirmText } = await Swal.fire({
+                title: 'Are you absolutely sure?',
+                text: "This action cannot be undone. This will permanently delete your account and all associated data. To confirm, please type 'DELETE' below:",
+                input: 'text',
+                inputPlaceholder: 'DELETE',
+                showCancelButton: true,
+                confirmButtonText: 'Delete My Account',
+                confirmButtonColor: '#ff5555',
+                cancelButtonColor: '#aaa',
+                inputValidator: (value) => {
+                    if (value !== 'DELETE') {
+                        return 'You must type "DELETE" to confirm.';
+                    }
+                }
+            });
+
+            if (confirmText !== 'DELETE') {
+                return; // User cancelled
+            }
+            
+            // Step 2: Re-authenticate for security
+            // We must re-authenticate before deleting
+            try {
+                // If user is logged in with Google, re-auth with Google
+                if (currentUser.providerData.some(p => p.providerId === 'google.com')) {
+                    const { GoogleAuthProvider, signInWithPopup } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js");
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(auth, provider); // Re-authenticates
+                } else {
+                    // Ask for password for Email/Password users
+                    const { value: password } = await Swal.fire({
+                        title: 'Verify Your Account',
+                        text: 'Please enter your password to confirm deletion.',
+                        input: 'password',
+                        inputPlaceholder: 'Enter your password',
+                        showCancelButton: true,
+                        confirmButtonText: 'Verify & Delete',
+                        confirmButtonColor: '#ff5555',
+                    });
+
+                    if (!password) return; // User cancelled password prompt
+
+                    const credential = EmailAuthProvider.credential(currentUser.email, password);
+                    await reauthenticateWithCredential(currentUser, credential);
+                }
+
+                // --- If re-authentication is successful, proceed to deletion ---
+
+                // Step 3: Delete Firestore data
+                const userDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.uid);
+                await deleteDoc(userDocRef);
+
+                // Step 4: Delete Firebase Auth user
+                await deleteUser(currentUser);
+                
+                Swal.fire('Deleted!', 'Your account has been permanently deleted.', 'success');
+                // The onAuthStateChanged listener will automatically redirect to login.
+
+            } catch (error) {
+                console.error("Error deleting account:", error);
+                let message = 'Failed to delete account.';
+                if (error.code === 'auth/wrong-password') {
+                    message = 'Incorrect password. Account deletion cancelled.';
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    message = 'Verification cancelled. Account was not deleted.';
+                }
+                Swal.fire('Error', message, 'error');
+            }
         }
         
         // --- Initialization and Event Listeners Setup ---
@@ -245,50 +339,49 @@
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-
-                // MANDATORY: Perform initial sign-in
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
-                } else {
-                    await signInAnonymously(auth);
-                    console.log("Signed in anonymously.");
-                }
-
-                // Attach permanent Auth State Listener
+                
+                // This is the FIX for the "Loading..." bug.
+                // We now wait for onAuthStateChanged to find the *real* user
+                // from the login.html session, instead of logging in anonymously.
                 onAuthStateChanged(auth, (user) => {
                     // Hide loading indicator as we have an auth status
                     loadingIndicator.classList.add('hidden');
                     profileContent.classList.remove('hidden');
 
-                    if (user) {
-                        // User is authenticated
+                    if (user && !user.isAnonymous) {
+                        // User is authenticated (and not anonymous)
                         currentUser = user;
                         loadAuthData(user);
                         
                         // Clear previous listener if it exists
-                        if (unsubscribeProfile) {
-                            unsubscribeProfile();
-                        }
+                        if (unsubscribeProfile) unsubscribeProfile();
+                        
                         // Start Firestore real-time listener
-                        unsubscribeProfile = subscribeToFirestoreProfile(db, user.uid);
+                        unsubscribeProfile = subscribeToFirestoreProfile(db, user);
+                        
                     } else {
-                        // User is NOT authenticated, redirect
-                        window.location.href = '/frontend/login.html'; 
+                        // User is NOT authenticated, or is anonymous
+                        console.log("User not logged in or is anonymous. Redirecting...");
+                        window.location.href = 'login.html'; 
                     }
                 });
                 
-                // Attach event listeners after services are initialized
-                saveBtn.addEventListener('click', () => saveChanges(db, auth));
-                document.getElementById('logoutBtn').addEventListener('click', () => handleLogout(auth));
+                // Attach event listeners
+                saveBtn.addEventListener('click', () => saveChanges(db));
+                logoutBtn.addEventListener('click', () => handleLogout(auth));
+                deleteAccountBtn.addEventListener('click', () => handleDeleteAccount(db, auth)); // NEW
+                
                 document.getElementById('darkModeToggle').addEventListener('click', () => {
                     document.body.classList.toggle('dark');
                 });
 
-
             } catch (error) {
-                console.error("FATAL: Firebase Initialization/Sign-in Error:", error);
-                showMessage("Failed to initialize Firebase or sign in. Check console.", true);
+                console.error("FATAL: Firebase Initialization Error:", error);
+                if (error.code === 'auth/invalid-api-key') {
+                     showMessage("FATAL: Invalid Firebase API Key. Check config.", true);
+                } else {
+                     showMessage("Failed to initialize Firebase. Check console.", true);
+                }
                 loadingIndicator.classList.add('hidden');
             }
         }
@@ -305,6 +398,8 @@
             --text: #fff;
             --accent: #00aaff;
             --error: #ff5555;
+            --danger: #ff5555;
+            --danger-glow: 0 0 15px rgba(255,85,85,0.6);
         }
 
         body {
@@ -396,7 +491,7 @@
 
         /* Styled Logout Button */
         .btn-logout {
-            background: #ff5555;
+            background: var(--danger);
             color: white;
             padding: 8px 18px;
             border-radius: 12px;
@@ -405,7 +500,7 @@
             cursor: pointer;
             transition: 0.3s;
             border: none;
-            box-shadow: 0 0 15px rgba(255,85,85,0.6);
+            box-shadow: var(--danger-glow);
         }
 
         .btn-logout:hover {
@@ -509,6 +604,14 @@
             border-left: 3px solid var(--accent);
             padding-left: 20px;
         }
+        
+        /* NEW: Danger Zone styling */
+        .settings-group.danger-zone {
+            border-left-color: var(--danger);
+        }
+        .settings-group.danger-zone h3 {
+            color: var(--danger);
+        }
 
         .settings-group h3 {
             color: var(--accent);
@@ -582,6 +685,23 @@
             background: #444; /* Changed to dark grey for a softer cancel action */
             box-shadow: none;
         }
+        
+        /* NEW: Delete Button */
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 22px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: var(--danger-glow);
+        }
+        .btn-delete:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 25px rgba(255,85,85,0.8);
+        }
 
         /* Message Box */
         #messageBox {
@@ -615,6 +735,27 @@
             color: #aaa;
             margin-top: 80px;
             width: 100%;
+        }
+        
+        /* SweetAlert2 Dark Mode */
+        body.swal2-shown > [aria-hidden="true"] {
+          filter: blur(5px);
+        }
+        .swal2-popup {
+          background: #0e162b !important;
+          color: #fff !important;
+          border-radius: 15px !important;
+        }
+        .swal2-title {
+          color: #fff !important;
+        }
+        .swal2-html-container {
+          color: #ccc !important;
+        }
+        .swal2-input, .swal2-textarea {
+          background: rgba(255,255,255,0.1) !important;
+          color: #fff !important;
+          border: 1px solid var(--accent) !important;
         }
 
     </style>
@@ -658,17 +799,14 @@
         <!-- Main Profile Content - Hidden by default -->
         <div class="profile-card hidden" id="profile-content">
             <div class="profile-header">
-                <!-- Using a simple placeholder as per security best practice -->
                 <img src="https://placehold.co/120x120/00aaff/ffffff?text=U" alt="Profile Picture" id="profile-photo"> 
                 <div>
-                    <!-- Content updated by JS -->
                     <h2 id="username">Loading...</h2>
                     <p id="userbio">Checking user status...</p>
                     <button class="edit-photo" disabled>Change Photo (Pro)</button>
                 </div>
             </div>
             
-            <!-- User ID Display (Crucial for multi-user apps) -->
             <p class="user-id-info">User ID (Public Identifier): <span id="userIdDisplay">Loading...</span></p>
 
             <div class="settings-area">
@@ -681,7 +819,6 @@
                     </div>
                     <div class="settings-field">
                         <label for="email">Email</label>
-                        <!-- Email is disabled by JS if it cannot be changed -->
                         <input type="email" id="email" value="" disabled> 
                     </div>
                     <div class="settings-field">
@@ -711,7 +848,7 @@
                     </div>
                 </div>
 
-                <!-- Security (Updated to be functional) -->
+                <!-- Security -->
                 <div class="settings-group">
                     <h3>🔒 Security</h3>
                     <p style="color: #ccc; font-size: 0.9em; margin-bottom: 20px;">
@@ -723,7 +860,6 @@
                     </div>
                     <div class="settings-field">
                         <label for="new-password">New Password</label>
-                        <!-- ID changed to new-password to match JS logic -->
                         <input type="password" id="new-password" placeholder="Enter new password (min 6 characters)">
                     </div>
                     <div class="settings-field">
@@ -737,9 +873,21 @@
 
                 <div class="settings-actions">
                     <button class="btn" id="saveBtn">💾 Save Changes</button>
-                    <!-- Reloads the page to discard unsaved changes -->
                     <button class="btn cancel" onclick="window.location.reload()">Cancel</button>
                 </div>
+                
+                <!-- NEW: Danger Zone -->
+                <div class="settings-group danger-zone" style="margin-top: 50px;">
+                    <h3>🚨 Danger Zone</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,85,85,0.05); padding: 15px; border-radius: 10px;">
+                        <div>
+                            <p style="margin: 0; font-weight: 600; color: #fff;">Delete This Account</p>
+                            <p style="margin: 5px 0 0; font-size: 0.9rem; color: #ffcccc;">Once deleted, this action is permanent and cannot be undone.</p>
+                        </div>
+                        <button class="btn-delete" id="deleteAccountBtn">Delete Account</button>
+                    </div>
+                </div>
+                
             </div>
         </div>
     </section>
