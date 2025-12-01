@@ -1,396 +1,581 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="google-adsense-account" content="ca-pub-3650229640310116">
-  <title>Contact | LearnComputers</title>
-  
-  <!-- SweetAlert2 Library -->
+  <title>Community | LearnComputers</title>
+
+  <!-- Same UI styling as index.html (kept inline so this page is standalone) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    :root {
-      --bg: #0a0f1f;
-      --card-bg: rgba(255, 255, 255, 0.08);
-      --text: #fff;
-      --accent: #00aaff;
-      --glow: 0 0 20px rgba(0, 170, 255, 0.4);
+    :root{
+      --bg:#0a0f1f; --accent:#00aaff; --card-bg:rgba(255,255,255,0.08);
+      --text:#fff; --glow:0 0 20px rgba(0,170,255,0.35);
+      --error-color: #ff5555;
     }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: radial-gradient(circle at top left, #101935, #060a14);
-      color: var(--text);
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden;
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--text);
+      background:radial-gradient(circle at top left,#101935,#060a14);overflow-x:hidden;}
+
+    /* ---------------- NAV (identical to index.html) ---------------- */
+    nav{
+      position:fixed; top:0; left:0; width:100%;
+      background:rgba(10,15,30,0.7); backdrop-filter:blur(20px);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:15px 7%; z-index:1000; box-shadow:0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo{font-size:1.6rem; font-weight:700; color:var(--accent)}
+    nav ul{list-style:none; display:flex; gap:25px; margin:0; padding:0}
+    nav ul li a{ text-decoration:none; color:#ccc; font-weight:500; transition:0.25s; font-size:1rem}
+    nav ul li a:hover, nav ul li a.active{ color:var(--accent) }
+    .nav-actions{display:flex; gap:10px; align-items:center}
+    .login-btn{
+      background:var(--accent); color:#fff; padding:8px 18px; border-radius:12px; font-weight:600; text-decoration:none;
+      box-shadow:var(--glow);
+    }
+    .login-btn:hover{ transform:scale(1.05) }
+    #darkModeToggle{ background:none; border:2px solid var(--accent); color:var(--accent); border-radius:10px; padding:6px 10px; cursor:pointer }
+    /* ---------------------------------------------------------------- */
+
+    .community {
+      padding:140px 10% 80px;
+      max-width:1100px;
+      margin:0 auto;
     }
 
-    /* 🌐 NAVIGATION — identical to homepage */
-    nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background: rgba(10, 15, 30, 0.7);
-      backdrop-filter: blur(20px);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 7%;
-      z-index: 1000;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    nav .logo {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-    nav ul {
-      list-style: none;
-      display: flex;
-      gap: 25px;
-      margin: 0;
-      padding: 0;
-    }
-    nav ul li a {
-      text-decoration: none;
-      color: #ccc;
-      font-weight: 500;
-      transition: 0.3s;
-    }
-    nav ul li a:hover, nav ul li a.active {
-      color: var(--accent);
-    }
-    .nav-actions {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .login-btn {
-      background: var(--accent);
-      color: white;
-      padding: 8px 18px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: 0.3s;
-      box-shadow: var(--glow);
-    }
-    .login-btn:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(0, 170, 255, 0.8);
-    }
-    #darkModeToggle {
-      background: none;
-      border: 2px solid var(--accent);
-      color: var(--accent);
-      border-radius: 10px;
-      padding: 6px 10px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    #darkModeToggle:hover {
-      background: var(--accent);
-      color: white;
-    }
+    .page-title { text-align:center; color:var(--accent); font-size:2.8rem; margin-bottom:8px; text-shadow:0 0 20px rgba(0,170,255,0.25) }
+    .page-sub { text-align:center; color:#b0c4de; margin-bottom:28px; font-size:1.05rem }
 
-    /* 📬 CONTACT SECTION */
-    .contact-section {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 150px 20px 80px;
-      gap: 40px;
-    }
+    .top-row { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:18px }
+    .left-actions { display:flex; align-items:center; gap:12px }
 
-    .contact-card {
-      background: var(--card-bg);
-      padding: 35px;
-      border-radius: 20px;
-      backdrop-filter: blur(15px);
-      width: 100%;
-      max-width: 600px;
-      box-shadow: var(--glow);
+    /* + button */
+    #addPostBtn {
+      width:56px; height:56px; border-radius:50%; border:none; background:var(--accent); color:white; font-size:28px;
+      display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--glow);
     }
+    #addPostBtn.frozen { opacity:.45; cursor:not-allowed; box-shadow:none; }
 
-    .contact-card h2 {
-      color: var(--accent);
-      margin-bottom: 15px;
-      font-size: 1.8rem;
-      text-shadow: 0 0 20px rgba(0,170,255,0.4);
-    }
+    .login-warning { color:var(--error-color); font-size:0.95rem; display:none; }
 
-    .contact-info p {
-      color: #b0c4de;
-      line-height: 1.6;
-      font-size: 1rem;
-      margin: 8px 0;
+    /* Filter */
+    .filter-wrap { margin-left:auto; display:flex; align-items:center; gap:12px }
+    select#topicFilter {
+      appearance: none; -webkit-appearance:none; -moz-appearance:none;
+      padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
+      background:rgb(231, 222, 222); color: #0c0c0c; font-weight:600; cursor:pointer;
     }
+    /* when user has chosen (not "All"), make it bold black style */
+    select#topicFilter.filtered { background:#fff; color:#000; font-weight:800; }
 
-    .contact-info a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .contact-info a:hover {
-      text-decoration: underline;
-    }
+    /* Posts stack vertically, newest first */
+    #postsContainer{ margin-top:18px; display:flex; flex-direction:column; gap:18px }
+    #postsContainer.loading { opacity: 0.5; }
+    .loading-message { color:#b0c4de; text-align:center; padding:20px; }
 
-    .contact-form form {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
+    .post-card{
+      background:var(--card-bg); backdrop-filter:blur(14px); border-radius:14px; padding:20px;
+      box-shadow:var(--glow); cursor:pointer; transition:transform .18s ease, box-shadow .18s ease;
+      text-align:left;
     }
+    .post-card:hover { transform:translateY(-6px); box-shadow:0 0 32px rgba(0,170,255,0.45) }
+    .post-meta { display:flex; gap:12px; align-items:center; font-size:0.85rem; color:#b8cfe9; margin-bottom:8px }
+    .post-date { color:#9fb7da; font-size:0.8rem }
+    .post-topic { background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:8px; color:#cfeaff; font-weight:700; font-size:0.82rem }
+    .post-author { color:#bfe6ff;margin-bottom:6px; font-size: 0.9rem; font-weight: 500;}
 
-    .contact-form input,
-    .contact-form textarea {
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      background: rgba(255,255,255,0.1);
-      color: white;
-      font-size: 1rem;
-      resize: none;
-    }
-    
-    .contact-form input:focus,
-    .contact-form textarea:focus {
-        box-shadow: 0 0 10px rgba(0,170,255,0.3);
-        background: rgba(255,255,255,0.15);
-    }
+    .post-title { color:var(--accent); font-size:1.12rem; margin:6px 0 10px; font-weight:700 }
+    .post-body { color:#dbeaff; line-height:1.5; font-size:0.98rem }
 
-    .contact-form button {
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      background: var(--accent);
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.3s;
-      box-shadow: var(--glow);
+    /* Modal full-screen white UI for opened post */
+    .post-modal {
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+      background:rgba(0,0,0,0.75); z-index:2200;
     }
-    .contact-form button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(0,170,255,0.8);
+    .post-modal .card {
+      width:90%; max-width:900px; max-height:88vh; overflow:auto; background:#fff; color:#000; border-radius:12px; padding:24px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.6);
     }
-    
-    /* SweetAlert Dark Mode Fix */
-    .swal2-popup {
-        background: #1a2035 !important;
-        color: #fff !important;
-        border: 1px solid var(--accent) !important;
-    }
-    .swal2-title { color: #fff !important; }
-    .swal2-content { color: #ccc !important; }
+    .modal-close { float:right; cursor:pointer; font-size:20px; color:#888 }
+    .modal-title { color:#0a63a8; font-size:1.4rem; margin:6px 0 4px; font-weight:700 }
+    .modal-meta { color:#666; font-size:0.9rem; margin-bottom:16px }
+    .modal-body { color:#222; line-height:1.6 }
 
-    /* ⚡ FOOTER */
-    footer {
-      text-align: center;
-      padding: 25px;
-      background: rgba(10,15,25,0.8);
-      backdrop-filter: blur(10px);
-      font-size: 0.9rem;
-      color: #aaa;
+    .replies { margin-top:18px; border-top:1px solid #eee; padding-top:14px }
+    .reply { background:#f6f9ff; padding:10px 12px; border-radius:10px; margin-top:10px; color:#0b2240 }
+    .reply-author { font-weight:700; color:#0a63a8; margin-bottom:6px }
+    .reply-text { color:#0b2240; }
+
+    .reply-area { margin-top:12px; display:flex; flex-direction:column; gap:10px }
+    .reply-area textarea { min-height:80px; padding:10px; border-radius:8px; border:1px solid #ddd; resize:vertical; font-size:1rem; }
+    .reply-area button { align-self:flex-end; background:var(--accent); color:white; border:none; padding:10px 16px; border-radius:8px; cursor:pointer; font-weight:700 }
+    .reply-area button:disabled { opacity:.5; cursor:not-allowed }
+
+    footer{ text-align:center; padding:25px; background:rgba(10,15,25,0.8); backdrop-filter:blur(10px); color:#aaa; margin-top:40px }
+
+    /* responsive */
+    @media (max-width:700px){
+      .post-meta{flex-direction:column;align-items:flex-start; gap:6px}
+      .reply-area button{width:100%}
+      .modal-body{font-size:0.95rem}
     }
   </style>
-  
-  <!-- Firebase SDKs -->
-  <script type="module">
-        // --- MANDATORY: Global variables provided by the environment ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        // --- CORRECT FIREBASE CONFIGURATION ---
-        const knownFirebaseConfig = {
-            apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
-            authDomain: "learncomputers-f88f1.firebaseapp.com",
-            projectId: "learncomputers-f88f1",
-            storageBucket: "learncomputers-f88f1.firebasestorage.app",
-            messagingSenderId: "5443256661",
-            appId: "1:5443256661:web:a2230e7ee2c96749866fdc", 
-            measurementId: "G-XRFCTMV5FJ"
-        };
-        
-        const firebaseConfig = typeof __firebase_config !== 'undefined' 
-            ? JSON.parse(__firebase_config) 
-            : knownFirebaseConfig;
-
-        // Imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            onAuthStateChanged, 
-            signInWithCustomToken, 
-            signInAnonymously
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // Initialize
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        let currentUser = null;
-        
-        // --- AUTH STATE LISTENER ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUser = user;
-                // If logged in, update the Nav and pre-fill email
-                updateNav(true);
-                if (user.email) {
-                    const emailField = document.getElementById('email');
-                    if (emailField) emailField.value = user.email;
-                }
-            } else {
-                // If NOT logged in, attempt anonymous login for database access
-                currentUser = null;
-                updateNav(false);
-                
-                // We need to sign in anonymously so the user has permission to write to the database
-                try {
-                    if (initialAuthToken) {
-                         await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                         await signInAnonymously(auth);
-                    }
-                } catch (e) {
-                    console.error("Anon auth failed", e);
-                }
-            }
-        });
-
-        function updateNav(isLoggedIn) {
-            const navActions = document.querySelector('.nav-actions');
-            if (isLoggedIn && navActions) {
-                // Change Login button to Profile if logged in
-                const loginBtn = navActions.querySelector('.login-btn');
-                if (loginBtn) {
-                    loginBtn.textContent = 'Profile';
-                    loginBtn.href = 'profile.html';
-                }
-            }
-        }
-
-        // --- FORM SUBMISSION ---
-        const contactForm = document.getElementById('contactForm');
-        if (contactForm) {
-            contactForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const submitBtn = e.target.querySelector('button');
-                const originalBtnText = submitBtn.textContent;
-                submitBtn.textContent = 'Sending...';
-                submitBtn.disabled = true;
-
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
-                const message = document.getElementById('message').value;
-
-                // --- LOGGING FOR DEBUGGING ---
-                const collectionPath = `artifacts/${appId}/public/data/contact_messages`;
-                console.log(`Attempting to save message to path: ${collectionPath}`);
-                
-                try {
-                    // Define collection path
-                    const messagesRef = collection(db, collectionPath);
-                    
-                    const docRef = await addDoc(messagesRef, {
-                        name: name,
-                        email: email,
-                        message: message,
-                        userId: currentUser ? currentUser.uid : 'anonymous',
-                        userEmail: currentUser ? currentUser.email : 'anonymous',
-                        timestamp: serverTimestamp()
-                    });
-
-                    console.log(`✅ Message successfully saved with ID: ${docRef.id}`);
-                    
-                    Swal.fire({
-                        title: "✅ Message Sent!",
-                        text: "Thank you for reaching out. We'll reply as soon as possible.",
-                        icon: "success",
-                        confirmButtonColor: "#00aaff"
-                    });
-                    e.target.reset();
-                    
-                    // Re-fill email if logged in
-                    if (currentUser && currentUser.email) {
-                        document.getElementById('email').value = currentUser.email;
-                    }
-
-                } catch (error) {
-                    console.error("❌ Error sending message: ", error);
-                    // Check for permission errors and log the user status
-                    if (error.code === 'permission-denied') {
-                        console.error("SECURITY RULE CHECK: Current User Status:", currentUser ? `UID: ${currentUser.uid}, Email: ${currentUser.email || 'N/A'}` : 'Not Authenticated');
-                    }
-                    Swal.fire({
-                        title: "Error",
-                        text: "Could not send message. Please try again later.",
-                        icon: "error",
-                        confirmButtonColor: "#d33"
-                    });
-                } finally {
-                    submitBtn.textContent = originalBtnText;
-                    submitBtn.disabled = false;
-                }
-            });
-        }
-  </script>
-
-  <!-- No external stylesheet link needed as per request -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- 🔝 PERFECT TOP NAV -->
+
+  <!-- NAVBAR (unchanged) -->
   <nav>
     <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
     <ul>
       <li><a href="index.html">Home</a></li>
       <li><a href="learning.html">Learn</a></li>
-      <li><a href="community.html">Community</a></li>
+      <li><a href="community.html" class="active">Community</a></li>
       <li><a href="resources.html">Resources</a></li>
       <li><a href="stories.html">Stories</a></li>
       <li><a href="chatbot.html">AI Chat</a></li>
       <li><a href="about.html">About</a></li>
-      <li><a href="contact.html" class="active">Contact</a></li>
+      <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
-      <a href="login.html" class="login-btn">Login</a>
-      <button id="darkModeToggle">🌙</button>
+      <!-- Auth button will be updated by JS -->
+      <a href="login.html" class="login-btn" id="authButton">Login</a>
     </div>
   </nav>
 
-  <!-- 💬 CONTACT CONTENT -->
-  <section class="contact-section">
-    <div class="contact-card contact-info">
-      <h2>📩 Get in Touch</h2>
-      <p><strong>Email:</strong> support@learncomputers.com</p>
-      <p><strong>Phone:</strong> +91 98765 43210</p>
-      <p><strong>Office:</strong> Tech Park, Thrissur, Kerala</p>
-      <p>We’re always here to guide you in your learning journey.  
-      Have questions? Drop us a message below or visit our <a href="community.html">Community</a>.</p>
+  <main class="community">
+    <div class="page-title">💬 Community Forum</div>
+    <div class="page-sub">Join discussions, ask questions, and learn from others in programming, AI, hardware, and more.</div>
+
+    <div class="top-row">
+      <div class="left-actions">
+        <button id="addPostBtn" class="frozen">+</button>
+        <div id="loginWarning" class="login-warning" style="display:block;">You must be logged in to create a post.</div>
+        <div id="userIdDisplay" style="color: #4CAF50; font-size: 0.9rem; font-weight: 600; display:none;"></div>
+      </div>
+
+      <div class="filter-wrap">
+        <label for="topicFilter" style="color:#f0f2f5;font-weight:600;margin-right:8px">Filter:</label>
+        <select id="topicFilter" style="color:#0c0c0c" aria-label="Filter posts by topic">
+          <option value="All" selected>All</option>
+          <option>Programming & Coding</option>
+          <option>AI & Machine Learning</option>
+          <option>Cybersecurity & Hacking</option>
+          <option>Computer Hardware</option>
+          <option>Web Development</option>
+          <option>Networking</option>
+          <option>Operating Systems</option>
+          <option>Databases</option>
+          <option>Cloud Computing</option>
+          <option>DevOps</option>
+          <option>PC Troubleshooting</option>
+          <option>Software Engineering</option>
+          <option>Robotics</option>
+          <option>Data Science</option>
+          <option>App Development</option>
+          <option>Internet of Things (IoT)</option>
+          <option>AI Ethics</option>
+          <option>Math for Computing</option>
+          <option>History of Computers</option>
+          <option>Career & Certifications</option>
+          <option>Other</option>
+        </select>
+      </div>
     </div>
 
-    <div class="contact-card contact-form">
-      <h2>💬 Send a Message</h2>
-      <form id="contactForm">
-        <input type="text" id="name" placeholder="Your Name" required>
-        <input type="email" id="email" placeholder="Your Email" required>
-        <textarea id="message" rows="6" placeholder="Write your message..." required></textarea>
-        <button type="submit">Send</button>
-      </form>
+    <div id="postsContainer" aria-live="polite">
+        <div class="loading-message">Initializing Firebase...</div>
     </div>
-  </section>
+  </main>
+
+  <!-- Full-screen white modal for opened post -->
+  <div id="postModal" class="post-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="card" role="document">
+      <span id="closeModal" class="modal-close">✕</span>
+      <div id="modalContent">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-meta" id="modalMeta"></div>
+        <div class="modal-body" id="modalBody"></div>
+
+        <div class="replies" id="modalReplies">
+          <h4>Replies (<span id="replyCount">0</span>)</h4>
+          <div id="repliesList"></div>
+
+          <div id="replyArea" class="reply-area">
+            <textarea id="replyText" placeholder="Write a reply..."></textarea>
+            <button id="replySendBtn" disabled>Reply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <footer>© 2025 LearnComputers. All rights reserved.</footer>
 
+  <script type="module">
+    // --- FIREBASE IMPORTS ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, setDoc, doc, Timestamp, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-lite.js";
+
+    // setLogLevel('Debug'); // Uncomment to see Firebase logs
+
+    // --- MANDATORY: Global variables provided by the environment ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+    // --- FIREBASE INITIALIZATION ---
+    let app, db, auth;
+    let currentUserId = null;
+    let currentUserName = "Anonymous";
+    let isAuthReady = false;
+
+    // --- DOM Elements ---
+    const authButton = document.getElementById('authButton');
+    const addPostBtn = document.getElementById('addPostBtn');
+    const loginWarning = document.getElementById('loginWarning');
+    const topicFilter = document.getElementById('topicFilter');
+    const postsContainer = document.getElementById('postsContainer');
+    const userIdDisplay = document.getElementById('userIdDisplay');
+
+    const postModal = document.getElementById('postModal');
+    const closeModal = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMeta = document.getElementById('modalMeta');
+    const modalBody = document.getElementById('modalBody');
+    const repliesList = document.getElementById('repliesList');
+    const replyCountDisplay = document.getElementById('replyCount');
+    const replyArea = document.getElementById('replyArea');
+    const replyText = document.getElementById('replyText');
+    const replySendBtn = document.getElementById('replySendBtn');
+
+    // --- STATE ---
+    let allPosts = []; // Local cache of all posts for filtering
+    let currentOpenPostId = null;
+    let repliesUnsubscribe = null; // To clean up reply listener
+
+    // --- PATHS ---
+    const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/posts`;
+    const getRepliesCollectionPath = (postId) => `${POSTS_COLLECTION_PATH}/${postId}/replies`;
+
+    // --- UTILITIES ---
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})
+    }
+    function truncate(s, n){ return (s.length>n)? s.slice(0,n-1)+'…' : s }
+
+    function formatFirestoreTimestamp(timestamp) {
+        if (timestamp instanceof Timestamp) {
+            return timestamp.toDate().toLocaleString();
+        }
+        return new Date().toLocaleString();
+    }
+
+    // --- AUTHENTICATION & UI SETUP ---
+
+    try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+
+        // 1. Handle Auth State
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                // Prefer displayName, then email, then a default name for posts
+                currentUserName = user.displayName || user.email || `User_${user.uid.slice(0, 8)}`;
+                
+                // Update navigation button to Profile
+                authButton.href = "profile.html";
+                authButton.textContent = "Profile";
+                
+                // Show user ID (for multi-user testing as requested)
+                userIdDisplay.textContent = `User ID: ${currentUserId}`;
+                userIdDisplay.style.display = 'block';
+
+                // Enable posting
+                updateAddPostUI(true);
+            } else {
+                // If not signed in via login.html, try anonymous sign-in (for read access)
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                // Fallback for anonymous users
+                currentUserId = auth.currentUser?.uid || crypto.randomUUID();
+                currentUserName = "@Anonymous"; // Cannot post, but can read
+                
+                authButton.href = "login.html";
+                authButton.textContent = "Login";
+                
+                userIdDisplay.style.display = 'none';
+
+                // Disable posting
+                updateAddPostUI(false);
+            }
+            isAuthReady = true;
+            // After auth is ready, start loading posts
+            postsContainer.innerHTML = '<div class="loading-message">Loading posts...</div>';
+            loadPostsListener();
+        });
+
+    } catch (e) {
+        console.error("Firebase Initialization Error:", e);
+        postsContainer.innerHTML = `<div class="loading-message" style="color:var(--error-color);">Error initializing database. Forum disabled.</div>`;
+        updateAddPostUI(false);
+    }
+
+    // Update UI state for posting based on email/phone login (not anonymous)
+    function updateAddPostUI(isLoggedIn) {
+      const isEmailUser = isLoggedIn && !auth.currentUser.isAnonymous;
+      if (!isEmailUser) {
+        addPostBtn.classList.add('frozen');
+        loginWarning.style.display = 'block';
+        replySendBtn.disabled = true;
+      } else {
+        addPostBtn.classList.remove('frozen');
+        loginWarning.style.display = 'none';
+        replySendBtn.disabled = false;
+      }
+    }
+
+
+    // --- POSTS LISTENER ---
+
+    function loadPostsListener() {
+        if (!isAuthReady || !db) return;
+
+        const postsRef = collection(db, POSTS_COLLECTION_PATH);
+
+        // Real-time listener for posts
+        onSnapshot(postsRef, (snapshot) => {
+            allPosts = [];
+            snapshot.forEach(doc => {
+                allPosts.push({ id: doc.id, ...doc.data() });
+            });
+            renderPosts(); // Re-render the filtered and sorted list
+        }, (error) => {
+            console.error("Error listening to posts:", error);
+            postsContainer.innerHTML = `<div class="loading-message" style="color:var(--error-color);">Failed to load posts in real-time.</div>`;
+        });
+    }
+
+    // Renders posts from the `allPosts` array based on filter and sorting
+    function renderPosts() {
+      postsContainer.innerHTML = '';
+      const filterValue = topicFilter.value;
+      
+      // 1. Filter: based on topic
+      const filtered = allPosts.filter(p => filterValue === 'All' || p.topic === filterValue);
+      
+      // 2. Sort: newest first (client-side sorting as requested)
+      const sorted = filtered.slice().sort((a, b) => {
+        // Compare Firestore Timestamps or fallback to Date
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateB - dateA; // Newest first
+      });
+      
+      if (sorted.length === 0) {
+          postsContainer.innerHTML = '<div class="loading-message">No posts found for this topic.</div>';
+      }
+
+      sorted.forEach(p => {
+        const el = document.createElement('article');
+        el.className = 'post-card';
+        el.dataset.postId = p.id;
+        
+        // Use authorName from Firestore, fallback if missing
+        const authorDisplay = escapeHtml(p.authorName || 'Unknown User'); 
+        
+        el.innerHTML = `
+          <div class="post-meta">
+            <div class="post-date">📅 ${formatFirestoreTimestamp(p.createdAt)}</div>
+            <div class="post-topic">${escapeHtml(p.topic)}</div>
+          </div>
+          <div class="post-author">${authorDisplay}</div>
+          <div class="post-title">${escapeHtml(p.title)}</div>
+          <div class="post-body">${escapeHtml(truncate(p.text, 280))}</div>
+        `;
+        
+        el.addEventListener('click', () => openPost(p));
+        postsContainer.appendChild(el);
+      });
+      
+      if(topicFilter.value !== 'All') topicFilter.classList.add('filtered'); else topicFilter.classList.remove('filtered');
+    }
+
+    // --- MODAL LOGIC (Open Post & Replies) ---
+
+    function openPost(post) {
+      if(repliesUnsubscribe) repliesUnsubscribe(); // Clean up previous listener
+
+      currentOpenPostId = post.id;
+      modalTitle.textContent = post.title;
+      modalMeta.textContent = `By ${escapeHtml(post.authorName || 'Unknown')} • ${formatFirestoreTimestamp(post.createdAt)} • ${escapeHtml(post.topic)}`;
+      modalBody.textContent = post.text;
+      
+      // Show/Hide reply area based on login status
+      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
+      replyArea.style.display = isEmailUser ? 'flex' : 'none';
+      
+      postModal.style.display = 'flex';
+      postModal.setAttribute('aria-hidden', 'false');
+      replyText.value = '';
+
+      // 2. Start listening for replies
+      const repliesRef = collection(db, getRepliesCollectionPath(post.id));
+      repliesUnsubscribe = onSnapshot(repliesRef, (snapshot) => {
+        const replies = [];
+        snapshot.forEach(doc => replies.push(doc.data()));
+        renderReplies(replies);
+      }, (error) => {
+        console.error("Error listening to replies:", error);
+        repliesList.innerHTML = `<p style="color:var(--error-color);">Could not load replies.</p>`;
+      });
+    }
+
+    function renderReplies(replies) {
+      repliesList.innerHTML = '';
+      replyCountDisplay.textContent = replies.length;
+      
+      if(replies.length === 0){
+        repliesList.innerHTML = '<p style="color:#666">No replies yet — be the first to reply.</p>';
+        return;
+      }
+      
+      // Sort: chronological order (oldest first)
+      replies.sort((a,b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
+        return dateA - dateB; 
+      }).forEach(r => {
+        const d = document.createElement('div');
+        d.className = 'reply';
+        const authorDisplay = escapeHtml(r.authorName || 'Unknown User');
+        d.innerHTML = `
+          <div class="reply-author">${authorDisplay}</div>
+          <div class="reply-text">${escapeHtml(r.text)}</div>
+          <div style="font-size:0.8rem;color:#777;margin-top:6px">${formatFirestoreTimestamp(r.createdAt)}</div>
+        `;
+        repliesList.appendChild(d);
+      });
+    }
+    
+    // Send Reply Handler
+    replySendBtn.addEventListener('click', async () => {
+      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
+      if(!isEmailUser){
+        Swal.fire({ icon:'warning', title:'Login required', text:'Please log in with email/phone to reply.' });
+        return;
+      }
+      
+      const text = replyText.value.trim();
+      if(!text) { Swal.fire({ icon:'warning', title:'Empty reply', text:'Please write something to reply.'}); return; }
+      
+      replySendBtn.disabled = true;
+      
+      try {
+        const repliesRef = collection(db, getRepliesCollectionPath(currentOpenPostId));
+        await addDoc(repliesRef, {
+          text,
+          authorId: currentUserId,
+          authorName: currentUserName,
+          createdAt: serverTimestamp()
+        });
+        
+        replyText.value = '';
+        Swal.fire({ icon:'success', title:'Reply posted', timer:1200, showConfirmButton:false });
+      } catch (e) {
+        console.error("Error posting reply:", e);
+        Swal.fire({ icon:'error', title:'Error', text:'Failed to post reply. Try again.' });
+      } finally {
+        replySendBtn.disabled = false;
+      }
+    });
+
+    // close modal cleanup
+    function closePostModal() {
+      postModal.style.display = 'none';
+      postModal.setAttribute('aria-hidden','true');
+      currentOpenPostId = null;
+      if(repliesUnsubscribe) repliesUnsubscribe();
+    }
+    closeModal.addEventListener('click', closePostModal);
+    postModal.addEventListener('click', (e) => { if(e.target === postModal){ closePostModal(); }});
+
+
+    // --- ADD POST LOGIC ---
+
+    addPostBtn.addEventListener('click', async () => {
+      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
+      if(!isEmailUser){
+        Swal.fire({ icon:'warning', title:'Login required', text:'You must be logged in with email/phone to create a post.'});
+        return;
+      }
+      
+      const { value: formValues } = await Swal.fire({
+        title: 'Create a new post',
+        html:
+          `<input id="swalTitle" class="swal2-input" placeholder="Heading (required)">` +
+          `<select id="swalTopic" class="swal2-select" style="margin-top:8px; padding:8px; border-radius:6px;">` +
+          // Dynamically populate topics from the filter select element
+          Array.from(topicFilter.options).map(opt => 
+            opt.value !== 'All' ? `<option value="${opt.value}">${opt.value}</option>` : ''
+          ).join('') +
+          `</select>` +
+          `<textarea id="swalContent" class="swal2-textarea" placeholder="Write your post (required)"></textarea>`,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Post',
+        confirmButtonColor: '#00aaff',
+        preConfirm: () => {
+          const title = document.getElementById('swalTitle').value.trim();
+          const topic = document.getElementById('swalTopic').value;
+          const content = document.getElementById('swalContent').value.trim();
+          if(!title) { Swal.showValidationMessage('Heading is required'); return false; }
+          if(!content) { Swal.showValidationMessage('Content is required'); return false; }
+          return { title, topic, content };
+        }
+      });
+
+      if(formValues){
+        try {
+          addPostBtn.disabled = true;
+          addPostBtn.textContent = '...';
+          const postsRef = collection(db, POSTS_COLLECTION_PATH);
+          await addDoc(postsRef, {
+            title: formValues.title,
+            text: formValues.content,
+            topic: formValues.topic,
+            authorId: currentUserId,
+            authorName: currentUserName,
+            createdAt: serverTimestamp(),
+            // The AI approval step would be integrated here in the future
+            // approved: true, // For now, auto-approve as requested
+          });
+
+          Swal.fire({ icon:'success', title:'Posted', text:'Your post is live.', timer:1200, showConfirmButton:false });
+        } catch (e) {
+          console.error("Error creating post:", e);
+          Swal.fire({ icon:'error', title:'Error', text:'Failed to create post. Try again.' });
+        } finally {
+          addPostBtn.disabled = false;
+          addPostBtn.textContent = '+';
+        }
+      }
+    });
+
+    // --- FILTER LOGIC ---
+    topicFilter.addEventListener('change', () => renderPosts());
+
+    // END SCRIPT
+  </script>
 </body>
 </html>

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stories | LearnComputers</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- SweetAlert2 for popups -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
     :root {
@@ -295,29 +298,180 @@
       <p>At just 14, Amphion built advanced AI and game systems, combining deep ethics with innovation — proving that age is no barrier to shaping the future of superintelligence.</p>
     </div>
 
-    <!-- 👇 Add more stories here manually -->
-    <!-- Just copy and paste the following block:
-    <div class="story-card">
-      <h2>Person Name</h2>
-      <h3>Title / Role</h3>
-      <p>Your story text here...</p>
-    </div>
-    -->
-
   </section>
 
   <section class="submit-section">
     <h2>Share Your Story</h2>
     <p>Are you a developer, creator, or learner with a journey worth sharing? Submit your story below — once approved by the admin team, it will appear on this page.</p>
-    <form>
-      <input type="text" placeholder="Your Full Name" required>
-      <input type="text" placeholder="Your Title / Role" required>
-      <textarea rows="5" placeholder="Your story..." required></textarea>
-      <button type="submit">Submit Story →</button>
+    <form id="storyForm">
+      <input type="text" id="storyName" placeholder="Your Full Name" required>
+      <input type="email" id="storyEmail" placeholder="Your Email (Used for admin contact)" required>
+      <input type="text" id="storyTitle" placeholder="Your Title / Role" required>
+      <textarea id="storyContent" rows="5" placeholder="Your story..." required></textarea>
+      <button type="submit" id="submitBtn">Submit Story →</button>
     </form>
   </section>
 
   <footer>© 2025 LearnComputers. All rights reserved.</footer>
 
+  <!-- Firebase Initialization and Story Submission Logic -->
+  <script type="module">
+    // --- MANDATORY: Global variables provided by the environment ---
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    
+    // --- FALLBACK CONFIGURATION (Use if environment variable is missing) ---
+    const knownFirebaseConfig = {
+        apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
+        authDomain: "learncomputers-f88f1.firebaseapp.com",
+        projectId: "learncomputers-f88f1",
+        storageBucket: "learncomputers-f88f1.firebasestorage.app",
+        messagingSenderId: "5443256661",
+        appId: "1:5443256661:web:a2230e7ee2c96749866fdc", 
+        measurementId: "G-XRFCTMV5FJ"
+    };
+    
+    // Determine effective configuration
+    let firebaseConfig;
+    try {
+        firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        if (Object.keys(firebaseConfig).length === 0) {
+            throw new Error("Empty environment config");
+        }
+    } catch (e) {
+        console.warn("Using fallback Firebase configuration.");
+        firebaseConfig = knownFirebaseConfig;
+    }
+    
+    // --- Firebase Imports ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Set Debug logging for Firestore
+    setLogLevel('Debug');
+
+    // Declare isAuthReady in the module scope so the event listener can access it.
+    let isAuthReady = false; 
+
+    // 1. Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // 2. Handle initial sign-in and keep authentication updated
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            // If no user, sign in anonymously to satisfy security rules (for non-write pages)
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken).catch(e => console.error("Custom token sign-in failed:", e));
+            } else {
+                signInAnonymously(auth).catch(e => console.error("Anonymous sign-in failed:", e));
+            }
+        }
+        // Set the flag once the auth state is known/initialized
+        isAuthReady = true; 
+        console.log("Authentication state initialized. User:", user ? user.uid : "None");
+    });
+
+
+    // 3. Story Submission Logic
+    const storyForm = document.getElementById('storyForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (storyForm) {
+        storyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Check the flag which is now defined in the scope
+            if (!isAuthReady) { 
+                await Swal.fire({
+                    icon: 'warning',
+                    title: 'System Initializing',
+                    text: 'Please wait a moment while the security system verifies your session.',
+                    confirmButtonColor: '#00aaff'
+                });
+                return;
+            }
+
+            const user = auth.currentUser;
+            
+            // CRITICAL CHECK: User must be signed in with a non-anonymous method (Email/Ph. No.)
+            // We check for isAnonymous being false. This includes Google, Email/Password, and Phone Auth.
+            if (!user || user.isAnonymous) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Login Required',
+                    text: 'You must be signed in with an Email or Phone account to submit a story. Please log in or sign up.',
+                    confirmButtonText: 'Go to Login',
+                    confirmButtonColor: '#00aaff'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'login.html';
+                    }
+                });
+                return;
+            }
+
+            const name = document.getElementById('storyName').value.trim();
+            const email = document.getElementById('storyEmail').value.trim();
+            const title = document.getElementById('storyTitle').value.trim();
+            const content = document.getElementById('storyContent').value.trim();
+
+            if (!db) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: 'Database connection error. Please check the console for details.',
+                    confirmButtonColor: '#00aaff'
+                });
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                // The new collection for review is: /artifacts/{appId}/public/data/story_submissions
+                const collectionRef = collection(db, `artifacts/${appId}/public/data/story_submissions`);
+                
+                await addDoc(collectionRef, {
+                    submitterName: name,
+                    submitterEmail: email,
+                    submitterUid: user.uid,
+                    submitterProvider: user.providerId, // e.g., 'firebase'
+                    title: title,
+                    content: content,
+                    status: 'Pending Review', // Admin must approve before it's public
+                    createdAt: new Date()
+                });
+
+                // Success message
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Story Submitted!',
+                    text: 'Thank you for sharing your story. It has been submitted for admin review and will appear on the page if approved.',
+                    confirmButtonColor: '#00aaff'
+                });
+
+                // Clear the form
+                storyForm.reset();
+
+            } catch (error) {
+                console.error("Error submitting story:", error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: `An error occurred while saving your story. Please try again. Error: ${error.message}`,
+                    confirmButtonColor: '#00aaff'
+                });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Story →';
+            }
+        });
+    }
+
+  </script>
 </body>
 </html>

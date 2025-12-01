@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-adsense-account" content="ca-pub-3650229640310116">
   <title>Contact | LearnComputers</title>
+  
+  <!-- SweetAlert2 Library -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
     :root {
       --bg: #0a0f1f;
@@ -153,6 +157,12 @@
       font-size: 1rem;
       resize: none;
     }
+    
+    .contact-form input:focus,
+    .contact-form textarea:focus {
+        box-shadow: 0 0 10px rgba(0,170,255,0.3);
+        background: rgba(255,255,255,0.15);
+    }
 
     .contact-form button {
       padding: 12px;
@@ -169,6 +179,15 @@
       transform: scale(1.05);
       box-shadow: 0 0 25px rgba(0,170,255,0.8);
     }
+    
+    /* SweetAlert Dark Mode Fix */
+    .swal2-popup {
+        background: #1a2035 !important;
+        color: #fff !important;
+        border: 1px solid var(--accent) !important;
+    }
+    .swal2-title { color: #fff !important; }
+    .swal2-content { color: #ccc !important; }
 
     /* ⚡ FOOTER */
     footer {
@@ -180,13 +199,157 @@
       color: #aaa;
     }
   </style>
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
+        // --- MANDATORY: Global variables provided by the environment ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- CORRECT FIREBASE CONFIGURATION ---
+        const knownFirebaseConfig = {
+            apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
+            authDomain: "learncomputers-f88f1.firebaseapp.com",
+            projectId: "learncomputers-f88f1",
+            storageBucket: "learncomputers-f88f1.firebasestorage.app",
+            messagingSenderId: "5443256661",
+            appId: "1:5443256661:web:a2230e7ee2c96749866fdc", 
+            measurementId: "G-XRFCTMV5FJ"
+        };
+        
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : knownFirebaseConfig;
 
-  <!-- ✅ SweetAlert Library CDN Link -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        // Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            onAuthStateChanged, 
+            signInWithCustomToken, 
+            signInAnonymously
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Initialize
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        
+        // --- AUTH STATE LISTENER ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // If logged in, update the Nav and pre-fill email
+                updateNav(true);
+                if (user.email) {
+                    const emailField = document.getElementById('email');
+                    if (emailField) emailField.value = user.email;
+                }
+            } else {
+                // If NOT logged in, attempt anonymous login for database access
+                currentUser = null;
+                updateNav(false);
+                
+                // We need to sign in anonymously so the user has permission to write to the database
+                try {
+                    if (initialAuthToken) {
+                         await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                         await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    console.error("Anon auth failed", e);
+                }
+            }
+        });
+
+        function updateNav(isLoggedIn) {
+            const navActions = document.querySelector('.nav-actions');
+            if (isLoggedIn && navActions) {
+                // Change Login button to Profile if logged in
+                const loginBtn = navActions.querySelector('.login-btn');
+                if (loginBtn) {
+                    loginBtn.textContent = 'Profile';
+                    loginBtn.href = 'profile.html';
+                }
+            }
+        }
+
+        // --- FORM SUBMISSION ---
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = e.target.querySelector('button');
+                const originalBtnText = submitBtn.textContent;
+                submitBtn.textContent = 'Sending...';
+                submitBtn.disabled = true;
+
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
+                const message = document.getElementById('message').value;
+
+                // --- LOGGING FOR DEBUGGING ---
+                const collectionPath = `artifacts/${appId}/public/data/contact_messages`;
+                console.log(`Attempting to save message to path: ${collectionPath}`);
+                
+                try {
+                    // Define collection path
+                    const messagesRef = collection(db, collectionPath);
+                    
+                    const docRef = await addDoc(messagesRef, {
+                        name: name,
+                        email: email,
+                        message: message,
+                        userId: currentUser ? currentUser.uid : 'anonymous',
+                        userEmail: currentUser ? currentUser.email : 'anonymous',
+                        timestamp: serverTimestamp()
+                    });
+
+                    console.log(`✅ Message successfully saved with ID: ${docRef.id}`);
+                    
+                    Swal.fire({
+                        title: "✅ Message Sent!",
+                        text: "Thank you for reaching out. We'll reply as soon as possible.",
+                        icon: "success",
+                        confirmButtonColor: "#00aaff"
+                    });
+                    e.target.reset();
+                    
+                    // Re-fill email if logged in
+                    if (currentUser && currentUser.email) {
+                        document.getElementById('email').value = currentUser.email;
+                    }
+
+                } catch (error) {
+                    console.error("❌ Error sending message: ", error);
+                    // Check for permission errors and log the user status
+                    if (error.code === 'permission-denied') {
+                        console.error("SECURITY RULE CHECK: Current User Status:", currentUser ? `UID: ${currentUser.uid}, Email: ${currentUser.email || 'N/A'}` : 'Not Authenticated');
+                    }
+                    Swal.fire({
+                        title: "Error",
+                        text: "Could not send message. Please try again later.",
+                        icon: "error",
+                        confirmButtonColor: "#d33"
+                    });
+                } finally {
+                    submitBtn.textContent = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+  </script>
+
+  <!-- No external stylesheet link needed as per request -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- 🔝 PERFECT TOP NAV (unchanged) -->
+  <!-- 🔝 PERFECT TOP NAV -->
   <nav>
     <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
     <ul>
@@ -228,20 +391,6 @@
   </section>
 
   <footer>© 2025 LearnComputers. All rights reserved.</footer>
-
-   <!-- ✅ SweetAlert Script -->
-  <script>
-    document.getElementById('contactForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      Swal.fire({
-        title: "✅ Message Sent!",
-        text: "Thank you for reaching out. We'll reply as soon as possible.",
-        icon: "success",
-        confirmButtonColor: "#4f8cff"
-      });
-      e.target.reset();
-    });
-  </script>
 
 </body>
 </html>
