@@ -14,7 +14,6 @@
     :root{
       --bg:#0a0f1f; --accent:#00aaff; --card-bg:rgba(255,255,255,0.08);
       --text:#fff; --glow:0 0 20px rgba(0,170,255,0.35);
-      --error-color: #ff5555;
     }
     *{box-sizing:border-box}
     html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--text);
@@ -59,22 +58,20 @@
     }
     #addPostBtn.frozen { opacity:.45; cursor:not-allowed; box-shadow:none; }
 
-    .login-warning { color:var(--error-color); font-size:0.95rem; display:none; }
+    .login-warning { color:#ff7a7a; font-size:0.95rem; display:none; }
 
     /* Filter */
     .filter-wrap { margin-left:auto; display:flex; align-items:center; gap:12px }
     select#topicFilter {
       appearance: none; -webkit-appearance:none; -moz-appearance:none;
       padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.06);
-      background:rgb(231, 222, 222); color: #0c0c0c; font-weight:600; cursor:pointer;
+      background:rgb(231, 222, 222); color: #fff; font-weight:600; cursor:pointer;
     }
     /* when user has chosen (not "All"), make it bold black style */
     select#topicFilter.filtered { background:#fff; color:#000; font-weight:800; }
 
     /* Posts stack vertically, newest first */
     #postsContainer{ margin-top:18px; display:flex; flex-direction:column; gap:18px }
-    #postsContainer.loading { opacity: 0.5; }
-    .loading-message { color:#b0c4de; text-align:center; padding:20px; }
 
     .post-card{
       background:var(--card-bg); backdrop-filter:blur(14px); border-radius:14px; padding:20px;
@@ -85,7 +82,6 @@
     .post-meta { display:flex; gap:12px; align-items:center; font-size:0.85rem; color:#b8cfe9; margin-bottom:8px }
     .post-date { color:#9fb7da; font-size:0.8rem }
     .post-topic { background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:8px; color:#cfeaff; font-weight:700; font-size:0.82rem }
-    .post-author { color:#bfe6ff;margin-bottom:6px; font-size: 0.9rem; font-weight: 500;}
 
     .post-title { color:var(--accent); font-size:1.12rem; margin:6px 0 10px; font-weight:700 }
     .post-body { color:#dbeaff; line-height:1.5; font-size:0.98rem }
@@ -140,8 +136,7 @@
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
-      <!-- Auth button will be updated by JS -->
-      <a href="login.html" class="login-btn" id="authButton">Login</a>
+      <a href="login.html" class="login-btn">Login</a>
     </div>
   </nav>
 
@@ -151,9 +146,8 @@
 
     <div class="top-row">
       <div class="left-actions">
-        <button id="addPostBtn" class="frozen">+</button>
-        <div id="loginWarning" class="login-warning" style="display:block;">You must be logged in to create a post.</div>
-        <div id="userIdDisplay" style="color: #4CAF50; font-size: 0.9rem; font-weight: 600; display:none;"></div>
+        <button id="addPostBtn">+</button>
+        <div id="loginWarning" class="login-warning">You must be logged in to create a post.</div>
       </div>
 
       <div class="filter-wrap">
@@ -185,9 +179,7 @@
       </div>
     </div>
 
-    <div id="postsContainer" aria-live="polite">
-        <div class="loading-message">Initializing Firebase...</div>
-    </div>
+    <div id="postsContainer" aria-live="polite"></div>
   </main>
 
   <!-- Full-screen white modal for opened post -->
@@ -200,12 +192,12 @@
         <div class="modal-body" id="modalBody"></div>
 
         <div class="replies" id="modalReplies">
-          <h4>Replies (<span id="replyCount">0</span>)</h4>
+          <h4>Replies</h4>
           <div id="repliesList"></div>
 
           <div id="replyArea" class="reply-area">
             <textarea id="replyText" placeholder="Write a reply..."></textarea>
-            <button id="replySendBtn" disabled>Reply</button>
+            <button id="replySendBtn">Reply</button>
           </div>
         </div>
       </div>
@@ -215,367 +207,201 @@
   <footer>© 2025 LearnComputers. All rights reserved.</footer>
 
   <script type="module">
-    // --- FIREBASE IMPORTS ---
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, onSnapshot, addDoc, serverTimestamp, getDocs, setDoc, doc, Timestamp, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-lite.js";
+/* ================= FIREBASE IMPORTS ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, query,
+  orderBy, where, serverTimestamp, doc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // setLogLevel('Debug'); // Uncomment to see Firebase logs
+/* ================= FIREBASE CONFIG ================= */
+const knownFirebaseConfig = {
+  apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
+  authDomain: "learncomputers-f88f1.firebaseapp.com",
+  projectId: "learncomputers-f88f1",
+  storageBucket: "learncomputers-f88f1.firebasestorage.app",
+  messagingSenderId: "5443256661",
+  appId: "1:5443256661:web:a2230e7ee2c99749866fdc",
+  measurementId: "G-XRFCTMV5FJ"
+};
 
-    // --- MANDATORY: Global variables provided by the environment ---
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+const app = initializeApp(knownFirebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-    // --- FIREBASE INITIALIZATION ---
-    let app, db, auth;
-    let currentUserId = null;
-    let currentUserName = "Anonymous";
-    let isAuthReady = false;
+/* ================= LOGIN STATE ================= */
+let currentUser = null;
 
-    // --- DOM Elements ---
-    const authButton = document.getElementById('authButton');
-    const addPostBtn = document.getElementById('addPostBtn');
-    const loginWarning = document.getElementById('loginWarning');
-    const topicFilter = document.getElementById('topicFilter');
-    const postsContainer = document.getElementById('postsContainer');
-    const userIdDisplay = document.getElementById('userIdDisplay');
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("username", user.displayName || "@User");
+  } else {
+    currentUser = null;
+    localStorage.setItem("loggedIn", "false");
+  }
+});
 
-    const postModal = document.getElementById('postModal');
-    const closeModal = document.getElementById('closeModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalMeta = document.getElementById('modalMeta');
-    const modalBody = document.getElementById('modalBody');
-    const repliesList = document.getElementById('repliesList');
-    const replyCountDisplay = document.getElementById('replyCount');
-    const replyArea = document.getElementById('replyArea');
-    const replyText = document.getElementById('replyText');
-    const replySendBtn = document.getElementById('replySendBtn');
+/* ================= ELEMENTS ================= */
+const addPostBtn = document.getElementById('addPostBtn');
+const loginWarning = document.getElementById('loginWarning');
+const topicFilter = document.getElementById('topicFilter');
+const postsContainer = document.getElementById('postsContainer');
 
-    // --- STATE ---
-    let allPosts = []; // Local cache of all posts for filtering
-    let currentOpenPostId = null;
-    let repliesUnsubscribe = null; // To clean up reply listener
+const postModal = document.getElementById('postModal');
+const closeModal = document.getElementById('closeModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalMeta = document.getElementById('modalMeta');
+const modalBody = document.getElementById('modalBody');
+const repliesList = document.getElementById('repliesList');
+const replyArea = document.getElementById('replyArea');
+const replyText = document.getElementById('replyText');
+const replySendBtn = document.getElementById('replySendBtn');
 
-    // --- PATHS ---
-    const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/posts`;
-    const getRepliesCollectionPath = (postId) => `${POSTS_COLLECTION_PATH}/${postId}/replies`;
+let currentOpenPostId = null;
 
-    // --- UTILITIES ---
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})
+/* ================= HELPERS ================= */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
+  );
+}
+function truncate(s,n){ return s.length>n ? s.slice(0,n-1)+'…' : s }
+
+/* ================= ADD POST UI STATE ================= */
+function updateAddPostUI(){
+  if(!currentUser){
+    addPostBtn.classList.add('frozen');
+    loginWarning.style.display='block';
+  }else{
+    addPostBtn.classList.remove('frozen');
+    loginWarning.style.display='none';
+  }
+}
+setInterval(updateAddPostUI, 500);
+
+/* ================= LOAD POSTS ================= */
+async function loadPosts(){
+  postsContainer.innerHTML='';
+  const q = query(collection(db,"posts"), orderBy("createdAt","desc"));
+  const snap = await getDocs(q);
+
+  snap.forEach(docSnap=>{
+    const p = docSnap.data();
+    if(topicFilter.value!=="All" && p.topic!==topicFilter.value) return;
+
+    const el = document.createElement("article");
+    el.className="post-card";
+    el.innerHTML=`
+      <div class="post-meta">
+        <div class="post-date">📅 ${p.createdAt?.toDate().toLocaleString()}</div>
+        <div class="post-topic">${p.topic}</div>
+      </div>
+      <div style="color:#bfe6ff;margin-bottom:6px">${p.author}</div>
+      <div class="post-title">${escapeHtml(p.title)}</div>
+      <div class="post-body">${escapeHtml(truncate(p.text,280))}</div>
+    `;
+    el.onclick=()=>openPost(docSnap.id,p);
+    postsContainer.appendChild(el);
+  });
+}
+loadPosts();
+
+/* ================= OPEN POST ================= */
+async function openPost(id,p){
+  currentOpenPostId=id;
+  modalTitle.textContent=p.title;
+  modalMeta.textContent=`By ${p.author} • ${p.topic}`;
+  modalBody.textContent=p.text;
+  repliesList.innerHTML='';
+
+  const rq=query(collection(db,"posts",id,"replies"),orderBy("createdAt","asc"));
+  const rs=await getDocs(rq);
+
+  if(rs.empty) repliesList.innerHTML="<p style='color:#666'>No replies yet.</p>";
+
+  rs.forEach(r=>{
+    const d=r.data();
+    const div=document.createElement("div");
+    div.className="reply";
+    div.innerHTML=`
+      <div class="reply-author">${d.author}</div>
+      <div class="reply-text">${escapeHtml(d.text)}</div>
+      <div style="font-size:.8rem;color:#777">${d.createdAt?.toDate().toLocaleString()}</div>
+    `;
+    repliesList.appendChild(div);
+  });
+
+  replyArea.style.display=currentUser?"block":"none";
+  postModal.style.display="flex";
+}
+
+/* ================= CREATE POST ================= */
+addPostBtn.onclick=async()=>{
+  if(!currentUser){
+    Swal.fire({icon:'warning',title:'Login required'});
+    return;
+  }
+
+  const {value:v}=await Swal.fire({
+    title:'Create a new post',
+    html:
+      `<input id="t" class="swal2-input" placeholder="Heading">`+
+      `<select id="tp" class="swal2-select">${[...topicFilter.options].map(o=>`<option>${o.text}</option>`).join('')}</select>`+
+      `<textarea id="c" class="swal2-textarea" placeholder="Write your post"></textarea>`,
+    showCancelButton:true,
+    preConfirm:()=>{
+      const t=document.getElementById('t').value.trim();
+      const c=document.getElementById('c').value.trim();
+      if(!t||!c) return Swal.showValidationMessage("All fields required");
+      return {t,c,tp:document.getElementById('tp').value};
     }
-    function truncate(s, n){ return (s.length>n)? s.slice(0,n-1)+'…' : s }
+  });
 
-    function formatFirestoreTimestamp(timestamp) {
-        if (timestamp instanceof Timestamp) {
-            return timestamp.toDate().toLocaleString();
-        }
-        return new Date().toLocaleString();
-    }
-
-    // --- AUTHENTICATION & UI SETUP ---
-
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-
-        // 1. Handle Auth State
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                // Prefer displayName, then email, then a default name for posts
-                currentUserName = user.displayName || user.email || `User_${user.uid.slice(0, 8)}`;
-                
-                // Update navigation button to Profile
-                authButton.href = "profile.html";
-                authButton.textContent = "Profile";
-                
-                // Show user ID (for multi-user testing as requested)
-                userIdDisplay.textContent = `User ID: ${currentUserId}`;
-                userIdDisplay.style.display = 'block';
-
-                // Enable posting
-                updateAddPostUI(true);
-            } else {
-                // If not signed in via login.html, try anonymous sign-in (for read access)
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                // Fallback for anonymous users
-                currentUserId = auth.currentUser?.uid || crypto.randomUUID();
-                currentUserName = "@Anonymous"; // Cannot post, but can read
-                
-                authButton.href = "login.html";
-                authButton.textContent = "Login";
-                
-                userIdDisplay.style.display = 'none';
-
-                // Disable posting
-                updateAddPostUI(false);
-            }
-            isAuthReady = true;
-            // After auth is ready, start loading posts
-            postsContainer.innerHTML = '<div class="loading-message">Loading posts...</div>';
-            loadPostsListener();
-        });
-
-    } catch (e) {
-        console.error("Firebase Initialization Error:", e);
-        postsContainer.innerHTML = `<div class="loading-message" style="color:var(--error-color);">Error initializing database. Forum disabled.</div>`;
-        updateAddPostUI(false);
-    }
-
-    // Update UI state for posting based on email/phone login (not anonymous)
-    function updateAddPostUI(isLoggedIn) {
-      const isEmailUser = isLoggedIn && !auth.currentUser.isAnonymous;
-      if (!isEmailUser) {
-        addPostBtn.classList.add('frozen');
-        loginWarning.style.display = 'block';
-        replySendBtn.disabled = true;
-      } else {
-        addPostBtn.classList.remove('frozen');
-        loginWarning.style.display = 'none';
-        replySendBtn.disabled = false;
-      }
-    }
-
-
-    // --- POSTS LISTENER ---
-
-    function loadPostsListener() {
-        if (!isAuthReady || !db) return;
-
-        const postsRef = collection(db, POSTS_COLLECTION_PATH);
-
-        // Real-time listener for posts
-        onSnapshot(postsRef, (snapshot) => {
-            allPosts = [];
-            snapshot.forEach(doc => {
-                allPosts.push({ id: doc.id, ...doc.data() });
-            });
-            renderPosts(); // Re-render the filtered and sorted list
-        }, (error) => {
-            console.error("Error listening to posts:", error);
-            postsContainer.innerHTML = `<div class="loading-message" style="color:var(--error-color);">Failed to load posts in real-time.</div>`;
-        });
-    }
-
-    // Renders posts from the `allPosts` array based on filter and sorting
-    function renderPosts() {
-      postsContainer.innerHTML = '';
-      const filterValue = topicFilter.value;
-      
-      // 1. Filter: based on topic
-      const filtered = allPosts.filter(p => filterValue === 'All' || p.topic === filterValue);
-      
-      // 2. Sort: newest first (client-side sorting as requested)
-      const sorted = filtered.slice().sort((a, b) => {
-        // Compare Firestore Timestamps or fallback to Date
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-        return dateB - dateA; // Newest first
-      });
-      
-      if (sorted.length === 0) {
-          postsContainer.innerHTML = '<div class="loading-message">No posts found for this topic.</div>';
-      }
-
-      sorted.forEach(p => {
-        const el = document.createElement('article');
-        el.className = 'post-card';
-        el.dataset.postId = p.id;
-        
-        // Use authorName from Firestore, fallback if missing
-        const authorDisplay = escapeHtml(p.authorName || 'Unknown User'); 
-        
-        el.innerHTML = `
-          <div class="post-meta">
-            <div class="post-date">📅 ${formatFirestoreTimestamp(p.createdAt)}</div>
-            <div class="post-topic">${escapeHtml(p.topic)}</div>
-          </div>
-          <div class="post-author">${authorDisplay}</div>
-          <div class="post-title">${escapeHtml(p.title)}</div>
-          <div class="post-body">${escapeHtml(truncate(p.text, 280))}</div>
-        `;
-        
-        el.addEventListener('click', () => openPost(p));
-        postsContainer.appendChild(el);
-      });
-      
-      if(topicFilter.value !== 'All') topicFilter.classList.add('filtered'); else topicFilter.classList.remove('filtered');
-    }
-
-    // --- MODAL LOGIC (Open Post & Replies) ---
-
-    function openPost(post) {
-      if(repliesUnsubscribe) repliesUnsubscribe(); // Clean up previous listener
-
-      currentOpenPostId = post.id;
-      modalTitle.textContent = post.title;
-      modalMeta.textContent = `By ${escapeHtml(post.authorName || 'Unknown')} • ${formatFirestoreTimestamp(post.createdAt)} • ${escapeHtml(post.topic)}`;
-      modalBody.textContent = post.text;
-      
-      // Show/Hide reply area based on login status
-      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
-      replyArea.style.display = isEmailUser ? 'flex' : 'none';
-      
-      postModal.style.display = 'flex';
-      postModal.setAttribute('aria-hidden', 'false');
-      replyText.value = '';
-
-      // 2. Start listening for replies
-      const repliesRef = collection(db, getRepliesCollectionPath(post.id));
-      repliesUnsubscribe = onSnapshot(repliesRef, (snapshot) => {
-        const replies = [];
-        snapshot.forEach(doc => replies.push(doc.data()));
-        renderReplies(replies);
-      }, (error) => {
-        console.error("Error listening to replies:", error);
-        repliesList.innerHTML = `<p style="color:var(--error-color);">Could not load replies.</p>`;
-      });
-    }
-
-    function renderReplies(replies) {
-      repliesList.innerHTML = '';
-      replyCountDisplay.textContent = replies.length;
-      
-      if(replies.length === 0){
-        repliesList.innerHTML = '<p style="color:#666">No replies yet — be the first to reply.</p>';
-        return;
-      }
-      
-      // Sort: chronological order (oldest first)
-      replies.sort((a,b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0);
-        return dateA - dateB; 
-      }).forEach(r => {
-        const d = document.createElement('div');
-        d.className = 'reply';
-        const authorDisplay = escapeHtml(r.authorName || 'Unknown User');
-        d.innerHTML = `
-          <div class="reply-author">${authorDisplay}</div>
-          <div class="reply-text">${escapeHtml(r.text)}</div>
-          <div style="font-size:0.8rem;color:#777;margin-top:6px">${formatFirestoreTimestamp(r.createdAt)}</div>
-        `;
-        repliesList.appendChild(d);
-      });
-    }
-    
-    // Send Reply Handler
-    replySendBtn.addEventListener('click', async () => {
-      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
-      if(!isEmailUser){
-        Swal.fire({ icon:'warning', title:'Login required', text:'Please log in with email/phone to reply.' });
-        return;
-      }
-      
-      const text = replyText.value.trim();
-      if(!text) { Swal.fire({ icon:'warning', title:'Empty reply', text:'Please write something to reply.'}); return; }
-      
-      replySendBtn.disabled = true;
-      
-      try {
-        const repliesRef = collection(db, getRepliesCollectionPath(currentOpenPostId));
-        await addDoc(repliesRef, {
-          text,
-          authorId: currentUserId,
-          authorName: currentUserName,
-          createdAt: serverTimestamp()
-        });
-        
-        replyText.value = '';
-        Swal.fire({ icon:'success', title:'Reply posted', timer:1200, showConfirmButton:false });
-      } catch (e) {
-        console.error("Error posting reply:", e);
-        Swal.fire({ icon:'error', title:'Error', text:'Failed to post reply. Try again.' });
-      } finally {
-        replySendBtn.disabled = false;
-      }
+  if(v){
+    await addDoc(collection(db,"posts"),{
+      title:v.t,
+      text:v.c,
+      topic:v.tp,
+      author:localStorage.getItem("username"),
+      authorUid:currentUser.uid,
+      createdAt:serverTimestamp(),
+      likeCount:0
     });
+    loadPosts();
+    Swal.fire({icon:'success',title:'Posted',timer:1200,showConfirmButton:false});
+  }
+};
 
-    // close modal cleanup
-    function closePostModal() {
-      postModal.style.display = 'none';
-      postModal.setAttribute('aria-hidden','true');
-      currentOpenPostId = null;
-      if(repliesUnsubscribe) repliesUnsubscribe();
-    }
-    closeModal.addEventListener('click', closePostModal);
-    postModal.addEventListener('click', (e) => { if(e.target === postModal){ closePostModal(); }});
+/* ================= REPLY ================= */
+replySendBtn.onclick=async()=>{
+  if(!currentUser) return;
+  const txt=replyText.value.trim();
+  if(!txt) return;
 
+  await addDoc(collection(db,"posts",currentOpenPostId,"replies"),{
+    text:txt,
+    author:localStorage.getItem("username"),
+    authorUid:currentUser.uid,
+    createdAt:serverTimestamp()
+  });
 
-    // --- ADD POST LOGIC ---
+  replyText.value='';
+  openPost(currentOpenPostId,{title:modalTitle.textContent,text:modalBody.textContent,topic:""});
+};
 
-    addPostBtn.addEventListener('click', async () => {
-      const isEmailUser = auth.currentUser && !auth.currentUser.isAnonymous;
-      if(!isEmailUser){
-        Swal.fire({ icon:'warning', title:'Login required', text:'You must be logged in with email/phone to create a post.'});
-        return;
-      }
-      
-      const { value: formValues } = await Swal.fire({
-        title: 'Create a new post',
-        html:
-          `<input id="swalTitle" class="swal2-input" placeholder="Heading (required)">` +
-          `<select id="swalTopic" class="swal2-select" style="margin-top:8px; padding:8px; border-radius:6px;">` +
-          // Dynamically populate topics from the filter select element
-          Array.from(topicFilter.options).map(opt => 
-            opt.value !== 'All' ? `<option value="${opt.value}">${opt.value}</option>` : ''
-          ).join('') +
-          `</select>` +
-          `<textarea id="swalContent" class="swal2-textarea" placeholder="Write your post (required)"></textarea>`,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Post',
-        confirmButtonColor: '#00aaff',
-        preConfirm: () => {
-          const title = document.getElementById('swalTitle').value.trim();
-          const topic = document.getElementById('swalTopic').value;
-          const content = document.getElementById('swalContent').value.trim();
-          if(!title) { Swal.showValidationMessage('Heading is required'); return false; }
-          if(!content) { Swal.showValidationMessage('Content is required'); return false; }
-          return { title, topic, content };
-        }
-      });
+/* ================= FILTER ================= */
+topicFilter.onchange=()=>loadPosts();
 
-      if(formValues){
-        try {
-          addPostBtn.disabled = true;
-          addPostBtn.textContent = '...';
-          const postsRef = collection(db, POSTS_COLLECTION_PATH);
-          await addDoc(postsRef, {
-            title: formValues.title,
-            text: formValues.content,
-            topic: formValues.topic,
-            authorId: currentUserId,
-            authorName: currentUserName,
-            createdAt: serverTimestamp(),
-            // The AI approval step would be integrated here in the future
-            // approved: true, // For now, auto-approve as requested
-          });
+/* ================= MODAL CLOSE ================= */
+closeModal.onclick=()=>postModal.style.display="none";
+postModal.onclick=e=>{ if(e.target===postModal) postModal.style.display="none"; };
 
-          Swal.fire({ icon:'success', title:'Posted', text:'Your post is live.', timer:1200, showConfirmButton:false });
-        } catch (e) {
-          console.error("Error creating post:", e);
-          Swal.fire({ icon:'error', title:'Error', text:'Failed to create post. Try again.' });
-        } finally {
-          addPostBtn.disabled = false;
-          addPostBtn.textContent = '+';
-        }
-      }
-    });
+</script>
 
-    // --- FILTER LOGIC ---
-    topicFilter.addEventListener('change', () => renderPosts());
-
-    // END SCRIPT
-  </script>
 </body>
 </html>

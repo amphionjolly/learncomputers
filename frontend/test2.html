@@ -1,569 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Sign Up | LearnComputers</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <!-- SweetAlert2 for popups -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- Load Firebase SDKs -->
-    <script type="module">
-        // --- THIS IS YOUR LIVE CONFIGURATION ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
-            authDomain: "learncomputers-f88f1.firebaseapp.com",
-            projectId: "learncomputers-f88f1",
-            storageBucket: "learncomputers-f88f1.firebasestorage.app",
-            messagingSenderId: "5443256661",
-            appId: "1:5443256661:web:a2230e7ee2c96749866fdc",
-            measurementId: "G-XRFCTMV5FJ"
-        };
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="google-adsense-account" content="ca-pub-3650229640310116">
+  <title>Community | LearnComputers</title>
 
-        // --- FIXED IMPORTS ---
-        import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            onAuthStateChanged,
-            GoogleAuthProvider,
-            signInWithPopup,
-            sendPasswordResetEmail // Added for "Forgot Password"
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        // Enable debug logging in the console
-        setLogLevel('debug');
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-        
-        // --- ADDED: Log current domain for debugging unauthorized-domain error ---
-        // You MUST add this domain (origin) to your Firebase Console under:
-        // Authentication -> Settings (or Sign-in method tab) -> Authorized domains
-        console.log("Current execution domain/origin:", window.location.origin);
-        // -----------------------------------------------------------------------
+  <style>
+    :root{
+      --bg:#0a0f1f; --accent:#00aaff; --card-bg:rgba(255,255,255,0.08);
+      --text:#fff; --glow:0 0 20px rgba(0,170,255,0.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:'Inter',system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;color:var(--text);
+      background:radial-gradient(circle at top left,#101935,#060a14);overflow-x:hidden;}
 
+    nav{
+      position:fixed; top:0; left:0; width:100%;
+      background:rgba(10,15,30,0.7); backdrop-filter:blur(20px);
+      display:flex; justify-content:space-between; align-items:center;
+      padding:15px 7%; z-index:1000; box-shadow:0 0 20px rgba(0,0,0,0.5);
+    }
+    nav .logo{font-size:1.6rem; font-weight:700; color:var(--accent)}
+    nav ul{list-style:none; display:flex; gap:25px; margin:0; padding:0}
+    nav ul li a{ text-decoration:none; color:#ccc; font-weight:500; transition:0.25s; font-size:1rem}
+    nav ul li a:hover, nav ul li a.active{ color:var(--accent) }
+    .nav-actions{display:flex; gap:10px; align-items:center}
+    .login-btn{
+      background:var(--accent); color:#fff; padding:8px 18px; border-radius:12px; font-weight:600; text-decoration:none;
+      box-shadow:var(--glow);
+    }
 
-        // --- DOM Elements ---
-        const form = document.getElementById('auth-form');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const submitBtn = document.getElementById('submit-btn');
-        const toggleLink = document.getElementById('toggle-auth');
-        const authTitle = document.getElementById('auth-title');
-        const googleBtn = document.getElementById('google-btn');
-        const forgotPasswordLink = document.getElementById('forgot-password'); // New element
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
+    .community { padding:140px 10% 80px; max-width:1100px; margin:0 auto; }
+    .page-title { text-align:center; color:var(--accent); font-size:2.8rem; margin-bottom:8px; }
+    .page-sub { text-align:center; color:#b0c4de; margin-bottom:28px; }
 
-        let isLogin = true; // Start in "Login" mode
+    .top-row { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:18px }
+    #addPostBtn {
+      width:56px; height:56px; border-radius:50%; border:none; background:var(--accent); color:white; font-size:28px;
+      display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--glow);
+    }
+    #addPostBtn.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        // --- Utility Functions ---
+    select#topicFilter {
+      padding:10px 16px; border-radius:10px; border:none;
+      background:#fff; color:#000; font-weight:600; cursor:pointer;
+    }
 
-        /** Displays a custom message box instead of using alert() */
-        function showMessage(text, isError = false) {
-            messageText.textContent = text;
-            messageBox.style.backgroundColor = isError ? '#cc3333' : '#33cc33'; // Red for error, Green for success
-            messageBox.style.transform = 'translateY(0)';
-            // Hide after 5 seconds
-            setTimeout(() => {
-                messageBox.style.transform = 'translateY(-150%)';
-            }, 5000);
-        }
+    #postsContainer{ margin-top:18px; display:flex; flex-direction:column; gap:18px }
+    .post-card{
+      background:var(--card-bg); border: 1px solid rgba(255,255,255,0.1); border-radius:14px; padding:20px;
+      cursor:pointer; transition: 0.2s;
+    }
+    .post-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .post-meta { display:flex; gap:12px; font-size:0.85rem; color:#b8cfe9; margin-bottom:8px }
+    .post-title { color:var(--accent); font-size:1.2rem; margin:6px 0; font-weight:700 }
+    .post-body { color:#dbeaff; opacity: 0.9; }
 
-        // --- Auth Listeners ---
+    .post-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.85); z-index:2200; padding: 20px; }
+    .post-modal .card { width:100%; max-width:800px; max-height:90vh; overflow:auto; background:#fff; color:#000; border-radius:12px; padding:30px; position: relative; }
+    .modal-close { position: absolute; top: 15px; right: 20px; cursor:pointer; font-size:24px; color:#666; }
 
-        // This listener checks if the user is *already* logged in.
-        // If they are, it sends them straight to the profile page.
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                // If logged in, redirect to the profile page
-                window.location.href = 'profile.html'; 
-            }
-            // If no user, just stay on the login page.
-        });
+    .replies { margin-top:25px; border-top:1px solid #eee; padding-top:20px }
+    .reply { background:#f0f4f8; padding:12px; border-radius:8px; margin-top:10px; }
+    .reply-author { font-weight:700; color:#0077cc; }
+    .reply-area { margin-top:20px; display:flex; flex-direction:column; gap:10px }
+    .reply-area textarea { padding:12px; border-radius:8px; border:1px solid #ddd; min-height:80px; }
+    .reply-area button { background:var(--accent); color:#fff; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:700; }
 
-
-        // --- Core Auth Functions ---
-        
-        // Handle Email/Password form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Stop the form from reloading the page
-            const email = emailInput.value;
-            const password = passwordInput.value;
-            submitBtn.textContent = 'Processing...';
-            submitBtn.disabled = true;
-
-            try {
-                if (isLogin) {
-                    // --- Login ---
-                    await signInWithEmailAndPassword(auth, email, password);
-                    showMessage('Login successful! Redirecting...', false);
-                    // onAuthStateChanged will handle the redirect
-                } else {
-                    // --- Signup ---
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    showMessage('Account created and logged in! Redirecting to profile...', false);
-                    // onAuthStateChanged will handle the redirect
-                }
-                
-            } catch (error) {
-                console.error("Auth Error:", error);
-                let message = 'An unknown authentication error occurred.';
-                // Provide user-friendly error messages
-                if (error.code === 'auth/weak-password') {
-                    message = 'Password should be at least 6 characters.';
-                } else if (error.code === 'auth/email-already-in-use') {
-                    message = 'This email is already in use.';
-                } else if (error.code === 'auth/invalid-email') {
-                    message = 'The email address is not valid.';
-                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    message = 'Invalid email or password.';
-                }
-                showMessage(`Error: ${message}`, true);
-            } finally {
-                // Re-enable the button
-                submitBtn.textContent = isLogin ? 'Login' : 'Sign Up';
-                submitBtn.disabled = false;
-            }
-        });
-        
-        // Handle Google Sign-in button
-        googleBtn.addEventListener('click', async () => {
-            googleBtn.textContent = 'Signing in...';
-            googleBtn.disabled = true;
-            try {
-                // Open Google sign-in popup
-                await signInWithPopup(auth, googleProvider);
-                // onAuthStateChanged will handle the redirect
-            } catch (error) {
-                console.error("Google Auth Error:", error);
-                let errorMessage = 'Google sign-in failed.';
-
-                if (error.code === 'auth/popup-closed-by-user') {
-                    errorMessage = 'Sign-in cancelled.';
-                } else if (error.code === 'auth/unauthorized-domain') {
-                    // This is the most common error if the Firebase Console setup is incomplete
-                    errorMessage = 'Google sign-in is not authorized for this domain. Check your Firebase Authentication Settings.';
-                }
-                
-                showMessage(errorMessage, true);
-            } finally {
-                // Reset button text
-                googleBtn.innerHTML = '<img src="https://www.google.com/favicon.ico" alt="Google logo"> Sign in with Google';
-                googleBtn.disabled = false;
-            }
-        });
-
-        // --- NEW: Forgot Password Function ---
-        forgotPasswordLink.addEventListener('click', async (e) => {
-            e.preventDefault();
-            
-            const { value: email } = await Swal.fire({
-                title: 'Forgot Password',
-                input: 'email',
-                inputLabel: 'Enter your account email',
-                inputPlaceholder: 'you@example.com',
-                showCancelButton: true,
-                confirmButtonText: 'Send Reset Link',
-                confirmButtonColor: '#00aaff'
-            });
-
-            if (email) {
-                try {
-                    await sendPasswordResetEmail(auth, email);
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Reset Link Sent!',
-                        text: 'Please check your email (and spam folder) for a link to reset your password.',
-                        confirmButtonColor: '#00aaff'
-                    });
-                } catch (error) {
-                    console.error("Password Reset Error:", error);
-                    let message = "Could not send reset link. Please check the email address.";
-                    if(error.code === 'auth/user-not-found') {
-                        message = "No account found with this email address.";
-                    }
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: message,
-                        confirmButtonColor: '#00aaff'
-                    });
-                }
-            }
-        });
-
-
-        // --- UI Toggling ---
-
-        // This switches the form between "Login" and "Sign Up" mode
-        toggleLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            isLogin = !isLogin;
-            if (isLogin) {
-                authTitle.textContent = 'Welcome Back';
-                submitBtn.textContent = 'Login';
-                toggleLink.innerHTML = 'Need an account? <span style="color:var(--accent); font-weight: 700;">Sign Up</span>';
-                forgotPasswordLink.style.display = 'block'; // Show "Forgot Password"
-            } else {
-                authTitle.textContent = 'Create New Account';
-                submitBtn.textContent = 'Sign Up';
-                toggleLink.innerHTML = 'Already have an account? <span style="color:var(--accent); font-weight: 700;">Login</span>';
-                forgotPasswordLink.style.display = 'none'; // Hide "Forgot Password"
-            }
-        });
-
-        // Dark Mode Toggle
-        document.getElementById('darkModeToggle').addEventListener('click', () => {
-            document.body.classList.toggle('dark');
-        });
-
-    </script>
-
-    <!-- Styles -->
-    <style>
-        :root {
-            --bg: #0a0f1f;
-            --card-bg: rgba(255, 255, 255, 0.08);
-            --text: #fff;
-            --accent: #00aaff;
-            --error: #ff5555;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top left, #101935, #060a14);
-            color: var(--text);
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-        }
-        
-        main {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding-top: 100px; /* Account for fixed nav */
-            padding-bottom: 50px;
-        }
-
-        /* 🌐 NAVIGATION (Copied from profile.html) */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(10, 15, 30, 0.7);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 7%;
-            z-index: 1000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
-
-        nav .logo {
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            gap: 25px;
-            margin: 0;
-            padding: 0;
-        }
-
-        nav ul li a {
-            text-decoration: none;
-            color: #ccc;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-
-        nav ul li a:hover, nav ul li a.active {
-            color: var(--accent);
-        }
-        
-        nav ul li a.active {
-            text-shadow: 0 0 8px var(--accent);
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .login-btn {
-             background: var(--accent);
-             color: white;
-             padding: 8px 18px;
-             border-radius: 12px;
-             text-decoration: none;
-             font-weight: 600;
-             transition: 0.3s;
-             box-shadow: 0 0 15px rgba(0,170,255,0.6);
-        }
-        
-         .login-btn:hover {
-             transform: scale(1.05);
-             box-shadow: 0 0 25px rgba(0,170,255,0.8);
-        }
-
-        #darkModeToggle {
-            background: none;
-            border: 2px solid var(--accent);
-            color: var(--accent);
-            border-radius: 10px;
-            padding: 6px 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        #darkModeToggle:hover {
-            background: var(--accent);
-            color: white;
-        }
-        
-        /* -------------------------------- */
-
-        .auth-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 40px;
-            width: 90%;
-            max-width: 450px;
-            box-shadow: 0 0 50px rgba(0,170,255,0.4);
-            text-align: center;
-        }
-
-        h2 {
-            color: var(--accent);
-            margin-bottom: 30px;
-            font-size: 2rem;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #c8e4ff;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(0,170,255,0.3);
-            border-radius: 10px;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            box-sizing: border-box; /* Added for consistent padding */
-            transition: 0.3s;
-        }
-
-        .input-group input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 10px rgba(0,170,255,0.4);
-        }
-
-        .btn-main, .btn-google {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-
-        .btn-main {
-            background: var(--accent);
-            color: white;
-            box-shadow: 0 4px 15px rgba(0,170,255,0.6);
-        }
-        
-        .btn-main:disabled {
-             background: #555;
-             opacity: 0.7;
-             cursor: not-allowed;
-             box-shadow: none;
-        }
-
-        .btn-main:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,170,255,0.8);
-        }
-        
-        .btn-google {
-            background: #fff;
-            color: #111;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            margin-top: 20px;
-        }
-        
-        .btn-google:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-        
-        .btn-google:hover:not(:disabled) {
-            background: #eee;
-        }
-        
-        .btn-google img {
-            width: 20px;
-            height: 20px;
-        }
-        
-        .divider {
-            margin: 25px 0;
-            display: flex;
-            align-items: center;
-            color: #aaa;
-            font-size: 0.9rem;
-        }
-        
-        .divider::before, .divider::after {
-            content: '';
-            flex-grow: 1;
-            height: 1px;
-            background: rgba(255,255,255,0.2);
-            margin: 0 10px;
-        }
-
-        .form-links {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 25px;
-            font-size: 0.95rem;
-        }
-
-        .form-links a {
-            text-decoration: none;
-            color: #fff;
-            font-weight: 600;
-        }
-        
-        #forgot-password {
-            color: #ccc;
-            font-weight: 500;
-        }
-        
-        #forgot-password:hover {
-            color: var(--accent);
-        }
-        
-        /* Message Box */
-        #messageBox {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translate(-50%, -150%);
-            padding: 15px 25px;
-            border-radius: 0 0 15px 15px;
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-            transition: transform 0.5s ease-in-out, background-color 0.3s;
-            z-index: 2000;
-        }
-        
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 25px;
-            background: rgba(10, 15, 25, 0.8);
-            backdrop-filter: blur(10px);
-            font-size: 0.9rem;
-            color: #aaa;
-            width: 100%;
-        }
-
-    </style>
+    footer{ text-align:center; padding:40px; color:#666; }
+  </style>
 </head>
 <body>
-    
-    <!-- Navbar (from profile.html, modified for logged-out state) -->
-    <nav>
-        <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="learning.html">Learn</a></li>
-            <li><a href="community.html">Community</a></li>
-            <li><a href="resources.html">Resources</a></li>
-            <li><a href="stories.html">Stories</a></li>
-            <li><a href="chatbot.html">AI Chat</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="contact.html">Contact</a></li>
-        </ul>
-        <div class="nav-actions">
-            <!-- Login button is now part of the nav -->
-            <a href="login.html" class="login-btn">Login</a> 
-            <button id="darkModeToggle">🌙</button>
-        </div>
-    </nav>
-    
-    <!-- Message Box for errors/success -->
-    <div id="messageBox">
-        <span id="messageText"></span>
+
+  <nav>
+    <div class="logo">💻 Learn<span style="color:#fff;">Computers</span></div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="community.html" class="active">Community</a></li>
+      <li><a href="chatbot.html">AI Chat</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="login-btn" id="navAuthBtn">Login</a>
+    </div>
+  </nav>
+
+  <main class="community">
+    <div class="page-title">💬 Community</div>
+    <div class="page-sub">Ask questions and share knowledge.</div>
+
+    <div class="top-row">
+      <div style="display:flex; align-items:center; gap:15px;">
+        <button id="addPostBtn">+</button>
+        <span id="loginNotice" style="color:#ff8888; font-size:0.9rem;">Login to post</span>
+      </div>
+      <select id="topicFilter">
+        <option value="All">All Topics</option>
+        <option>Programming</option>
+        <option>Hardware</option>
+        <option>AI</option>
+        <option>Cybersecurity</option>
+        <option>Other</option>
+      </select>
     </div>
 
-    <!-- Main content area -->
-    <main>
-        <div class="auth-container">
-            <h2 id="auth-title">Welcome Back</h2>
-            
-            <form id="auth-form">
-                <div class="input-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" required>
-                </div>
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" required>
-                </div>
-                
-                <button type="submit" class="btn-main" id="submit-btn">Login</button>
-            </form>
-            
-            <div class="divider">OR</div>
-            
-            <button class="btn-google" id="google-btn">
-                <img src="https://www.google.com/favicon.ico" alt="Google logo">
-                Sign in with Google
-            </button>
-            
-            <div class="form-links">
-                <a href="#" id="toggle-auth">Need an account? <span style="color:var(--accent); font-weight: 700;">Sign Up</span></a>
-                <a href="#" id="forgot-password">Forgot Password?</a>
-            </div>
-        </div>
-    </main>
-    
-    <footer>© 2025 LearnComputers | Designed with 💙 by Amphion</footer>
+    <div id="postsContainer">
+      <div style="text-align:center; padding:40px;">Loading discussions...</div>
+    </div>
+  </main>
 
+  <div id="postModal" class="post-modal">
+    <div class="card">
+      <span id="closeModal" class="modal-close">✕</span>
+      <h2 id="modalTitle" style="margin-top:0; color:#0077cc;"></h2>
+      <p id="modalMeta" style="color:#666; font-size:0.9rem;"></p>
+      <div id="modalBody" style="line-height:1.6; font-size:1.1rem; margin-bottom:20px;"></div>
+
+      <div class="replies">
+        <h3>Comments (<span id="replyCount">0</span>)</h3>
+        <div id="repliesList"></div>
+        <div id="replyArea" class="reply-area">
+          <textarea id="replyText" placeholder="Write a comment..."></textarea>
+          <button id="replyBtn">Post Comment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 LearnComputers</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // 1. Initialize Firebase
+    const firebaseConfig = JSON.parse(__firebase_config);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    // 2. Auth Handling (Rule 3)
+    let user = null;
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (err) {
+        console.error("Auth error:", err);
+      }
+    };
+    initAuth();
+
+    onAuthStateChanged(auth, (u) => {
+      user = u;
+      const addBtn = document.getElementById('addPostBtn');
+      const notice = document.getElementById('loginNotice');
+      const navBtn = document.getElementById('navAuthBtn');
+      const replyArea = document.getElementById('replyArea');
+
+      if (u && !u.isAnonymous) {
+        addBtn.classList.remove('disabled');
+        notice.style.display = 'none';
+        navBtn.textContent = 'Profile';
+        replyArea.style.display = 'flex';
+      } else {
+        addBtn.classList.add('disabled');
+        notice.style.display = 'inline';
+        replyArea.style.display = 'none';
+      }
+    });
+
+    // 3. Firestore Collection Path (Rule 1)
+    const postsCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+
+    // 4. Data Loading
+    let posts = [];
+    let currentPostId = null;
+
+    onSnapshot(postsCol, (snapshot) => {
+      posts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Simple sort in memory (Rule 2)
+      posts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      renderPosts();
+    }, (err) => {
+      console.error("Firestore Listen Error:", err);
+      document.getElementById('postsContainer').innerHTML = `<p style="color:red; text-align:center;">Error loading posts. Please check Firebase rules.</p>`;
+    });
+
+    function renderPosts() {
+      const container = document.getElementById('postsContainer');
+      const filter = document.getElementById('topicFilter').value;
+      const filtered = filter === 'All' ? posts : posts.filter(p => p.topic === filter);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666;">No posts yet. Be the first!</p>';
+        return;
+      }
+
+      container.innerHTML = '';
+      filtered.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'post-card';
+        div.onclick = () => openPost(p.id);
+        div.innerHTML = `
+          <div class="post-meta">
+            <span>${p.topic || 'General'}</span> • 
+            <span>By ${p.author || 'Member'}</span>
+          </div>
+          <div class="post-title">${p.title}</div>
+          <div class="post-body">${p.text.substring(0, 100)}${p.text.length > 100 ? '...' : ''}</div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // 5. Post & Reply Interaction
+    document.getElementById('addPostBtn').onclick = async () => {
+      if (!user || user.isAnonymous) {
+        Swal.fire('Login Required', 'Please login to create a discussion.', 'info');
+        return;
+      }
+
+      const { value: formValues } = await Swal.fire({
+        title: 'New Discussion',
+        html:
+          `<input id="swal-title" class="swal2-input" placeholder="Title">` +
+          `<textarea id="swal-text" class="swal2-textarea" placeholder="What's on your mind?"></textarea>`,
+        showCancelButton: true,
+        preConfirm: () => {
+          const title = document.getElementById('swal-title').value;
+          const text = document.getElementById('swal-text').value;
+          if (!title || !text) return Swal.showValidationMessage('Fill all fields');
+          return { title, text };
+        }
+      });
+
+      if (formValues) {
+        await addDoc(postsCol, {
+          ...formValues,
+          topic: document.getElementById('topicFilter').value === 'All' ? 'General' : document.getElementById('topicFilter').value,
+          author: user.displayName || 'Member',
+          authorId: user.uid,
+          createdAt: serverTimestamp()
+        });
+      }
+    };
+
+    function openPost(id) {
+      currentPostId = id;
+      const post = posts.find(p => p.id === id);
+      if (!post) return;
+
+      document.getElementById('modalTitle').textContent = post.title;
+      document.getElementById('modalBody').textContent = post.text;
+      document.getElementById('modalMeta').textContent = `By ${post.author} in ${post.topic}`;
+      document.getElementById('postModal').style.display = 'flex';
+
+      // Load replies (Rule 1: subcollection path)
+      const repliesCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts', id, 'replies');
+      onSnapshot(repliesCol, (snap) => {
+        if (currentPostId !== id) return;
+        const replies = snap.docs.map(d => d.data());
+        replies.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+        
+        document.getElementById('replyCount').textContent = replies.length;
+        const list = document.getElementById('repliesList');
+        list.innerHTML = '';
+        replies.forEach(r => {
+          const div = document.createElement('div');
+          div.className = 'reply';
+          div.innerHTML = `<div class="reply-author">${r.author}</div><div>${r.text}</div>`;
+          list.appendChild(div);
+        });
+      }, (err) => console.error("Reply Error:", err));
+    }
+
+    document.getElementById('replyBtn').onclick = async () => {
+      const text = document.getElementById('replyText').value.trim();
+      if (!text || !currentPostId || !user) return;
+
+      const repliesCol = collection(db, 'artifacts', appId, 'public', 'data', 'posts', currentPostId, 'replies');
+      await addDoc(repliesCol, {
+        text,
+        author: user.displayName || 'Member',
+        authorId: user.uid,
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('replyText').value = '';
+    };
+
+    document.getElementById('closeModal').onclick = () => document.getElementById('postModal').style.display = 'none';
+    document.getElementById('topicFilter').onchange = renderPosts;
+  </script>
 </body>
 </html>

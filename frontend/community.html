@@ -206,216 +206,202 @@
 
   <footer>© 2025 LearnComputers. All rights reserved.</footer>
 
-  <script>
-    /************* Configuration for login simulation *************/
-    // Your real login page should set:
-    // localStorage.setItem('loggedIn','true') and localStorage.setItem('username','YourName')
-    // For quick local testing, you can uncomment:
-    // localStorage.setItem('loggedIn','true'); localStorage.setItem('username','DemoUser');
+  <script type="module">
+/* ================= FIREBASE IMPORTS ================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, query,
+  orderBy, where, serverTimestamp, doc, setDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const loggedIn = localStorage.getItem('loggedIn') === 'true';
-    const currentUsername = localStorage.getItem('username') || '@You';
+/* ================= FIREBASE CONFIG ================= */
+const knownFirebaseConfig = {
+  apiKey: "AIzaSyBGsPfMlXGVMLazt4UahGyVzW2b1H1RyLA",
+  authDomain: "learncomputers-f88f1.firebaseapp.com",
+  projectId: "learncomputers-f88f1",
+  storageBucket: "learncomputers-f88f1.firebasestorage.app",
+  messagingSenderId: "5443256661",
+  appId: "1:5443256661:web:a2230e7ee2c99749866fdc",
+  measurementId: "G-XRFCTMV5FJ"
+};
 
-    // Elements
-    const addPostBtn = document.getElementById('addPostBtn');
-    const loginWarning = document.getElementById('loginWarning');
-    const topicFilter = document.getElementById('topicFilter');
-    const postsContainer = document.getElementById('postsContainer');
+const app = initializeApp(knownFirebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-    const postModal = document.getElementById('postModal');
-    const closeModal = document.getElementById('closeModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalMeta = document.getElementById('modalMeta');
-    const modalBody = document.getElementById('modalBody');
-    const repliesList = document.getElementById('repliesList');
-    const replyArea = document.getElementById('replyArea');
-    const replyText = document.getElementById('replyText');
-    const replySendBtn = document.getElementById('replySendBtn');
+/* ================= LOGIN STATE ================= */
+let currentUser = null;
 
-    // Posts data structure
-    // Each post: { id, title, text, topic, author, date:Date, replies: [{author,text,date}] }
-    const posts = [
-      { id: genId(), title: "Best OS for ethical hacking in 2025?", text: "Should I stick with Kali Linux or try Parrot OS for pentesting this year?", topic: "Operating Systems", author: "@CodeNinja", date: new Date("2025-10-09T09:00:00"), replies: [
-        { author: "@NetGuru", text: "Kali has more built-in tools, Parrot is lighter.", date: new Date("2025-10-09T11:00:00") }
-      ]},
-      { id: genId(), title: "Getting Started with Python", text: "Python is one of the easiest languages to learn and perfect for beginners. Try building small projects daily to master it!", topic: "Programming & Coding", author: "@Alex", date: new Date("2025-10-08T15:30:00"), replies: [
-        { author: "@Tutor", text: "Start with variables and functions, then projects.", date: new Date("2025-10-08T17:10:00") }
-      ]}
-    ];
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    localStorage.setItem("loggedIn", "true");
+    localStorage.setItem("username", user.displayName || "@User");
+  } else {
+    currentUser = null;
+    localStorage.setItem("loggedIn", "false");
+  }
+});
 
-    // helper: generate short unique id
-    function genId(){ return 'p_' + Math.random().toString(36).slice(2,10) }
+/* ================= ELEMENTS ================= */
+const addPostBtn = document.getElementById('addPostBtn');
+const loginWarning = document.getElementById('loginWarning');
+const topicFilter = document.getElementById('topicFilter');
+const postsContainer = document.getElementById('postsContainer');
 
-    // show add post button state
-    function updateAddPostUI(){
-      if(!loggedIn){
-        addPostBtn.classList.add('frozen');
-        loginWarning.style.display = 'block';
-      } else {
-        addPostBtn.classList.remove('frozen');
-        loginWarning.style.display = 'none';
-      }
+const postModal = document.getElementById('postModal');
+const closeModal = document.getElementById('closeModal');
+const modalTitle = document.getElementById('modalTitle');
+const modalMeta = document.getElementById('modalMeta');
+const modalBody = document.getElementById('modalBody');
+const repliesList = document.getElementById('repliesList');
+const replyArea = document.getElementById('replyArea');
+const replyText = document.getElementById('replyText');
+const replySendBtn = document.getElementById('replySendBtn');
+
+let currentOpenPostId = null;
+
+/* ================= HELPERS ================= */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
+  );
+}
+function truncate(s,n){ return s.length>n ? s.slice(0,n-1)+'…' : s }
+
+/* ================= ADD POST UI STATE ================= */
+function updateAddPostUI(){
+  if(!currentUser){
+    addPostBtn.classList.add('frozen');
+    loginWarning.style.display='block';
+  }else{
+    addPostBtn.classList.remove('frozen');
+    loginWarning.style.display='none';
+  }
+}
+setInterval(updateAddPostUI, 500);
+
+/* ================= LOAD POSTS ================= */
+async function loadPosts(){
+  postsContainer.innerHTML='';
+  const q = query(collection(db,"posts"), orderBy("createdAt","desc"));
+  const snap = await getDocs(q);
+
+  snap.forEach(docSnap=>{
+    const p = docSnap.data();
+    if(topicFilter.value!=="All" && p.topic!==topicFilter.value) return;
+
+    const el = document.createElement("article");
+    el.className="post-card";
+    el.innerHTML=`
+      <div class="post-meta">
+        <div class="post-date">📅 ${p.createdAt?.toDate().toLocaleString()}</div>
+        <div class="post-topic">${p.topic}</div>
+      </div>
+      <div style="color:#bfe6ff;margin-bottom:6px">${p.author}</div>
+      <div class="post-title">${escapeHtml(p.title)}</div>
+      <div class="post-body">${escapeHtml(truncate(p.text,280))}</div>
+    `;
+    el.onclick=()=>openPost(docSnap.id,p);
+    postsContainer.appendChild(el);
+  });
+}
+loadPosts();
+
+/* ================= OPEN POST ================= */
+async function openPost(id,p){
+  currentOpenPostId=id;
+  modalTitle.textContent=p.title;
+  modalMeta.textContent=`By ${p.author} • ${p.topic}`;
+  modalBody.textContent=p.text;
+  repliesList.innerHTML='';
+
+  const rq=query(collection(db,"posts",id,"replies"),orderBy("createdAt","asc"));
+  const rs=await getDocs(rq);
+
+  if(rs.empty) repliesList.innerHTML="<p style='color:#666'>No replies yet.</p>";
+
+  rs.forEach(r=>{
+    const d=r.data();
+    const div=document.createElement("div");
+    div.className="reply";
+    div.innerHTML=`
+      <div class="reply-author">${d.author}</div>
+      <div class="reply-text">${escapeHtml(d.text)}</div>
+      <div style="font-size:.8rem;color:#777">${d.createdAt?.toDate().toLocaleString()}</div>
+    `;
+    repliesList.appendChild(div);
+  });
+
+  replyArea.style.display=currentUser?"block":"none";
+  postModal.style.display="flex";
+}
+
+/* ================= CREATE POST ================= */
+addPostBtn.onclick=async()=>{
+  if(!currentUser){
+    Swal.fire({icon:'warning',title:'Login required'});
+    return;
+  }
+
+  const {value:v}=await Swal.fire({
+    title:'Create a new post',
+    html:
+      `<input id="t" class="swal2-input" placeholder="Heading">`+
+      `<select id="tp" class="swal2-select">${[...topicFilter.options].map(o=>`<option>${o.text}</option>`).join('')}</select>`+
+      `<textarea id="c" class="swal2-textarea" placeholder="Write your post"></textarea>`,
+    showCancelButton:true,
+    preConfirm:()=>{
+      const t=document.getElementById('t').value.trim();
+      const c=document.getElementById('c').value.trim();
+      if(!t||!c) return Swal.showValidationMessage("All fields required");
+      return {t,c,tp:document.getElementById('tp').value};
     }
-    updateAddPostUI();
+  });
 
-    // render posts: filter + sort (newest first), stacked vertically
-    function renderPosts(){
-      postsContainer.innerHTML = '';
-      const filterValue = topicFilter.value;
-      // sort newest first
-      const sorted = posts.slice().sort((a,b) => b.date - a.date);
-      const filtered = sorted.filter(p => filterValue === 'All' || p.topic === filterValue);
-      filtered.forEach(p => {
-        const el = document.createElement('article');
-        el.className = 'post-card';
-        el.dataset.postId = p.id;
-        el.innerHTML = `
-          <div class="post-meta">
-            <div class="post-date">📅 ${p.date.toLocaleString()}</div>
-            <div class="post-topic">${p.topic}</div>
-          </div>
-          <div class="post-author" style="color:#bfe6ff;margin-bottom:6px">${p.author}</div>
-          <div class="post-title">${escapeHtml(p.title)}</div>
-          <div class="post-body">${escapeHtml(truncate(p.text, 280))}</div>
-        `;
-        // click opens full view
-        el.addEventListener('click', () => openPost(p.id));
-        postsContainer.appendChild(el);
-      });
-      // visually mark select as filtered if not All
-      if(topicFilter.value !== 'All') topicFilter.classList.add('filtered'); else topicFilter.classList.remove('filtered');
-    }
-
-    // utility: escape
-    function escapeHtml(str){
-      return String(str).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]})
-    }
-    function truncate(s, n){ return (s.length>n)? s.slice(0,n-1)+'…' : s }
-
-    // open post modal by id
-    let currentOpenPostId = null;
-    function openPost(id){
-      const post = posts.find(p => p.id === id);
-      if(!post) return;
-      currentOpenPostId = id;
-      modalTitle.textContent = post.title;
-      modalMeta.textContent = `By ${post.author} • ${post.date.toLocaleString()} • ${post.topic}`;
-      modalBody.textContent = post.text;
-      renderReplies(post);
-      // show reply area only if logged in
-      if(!loggedIn){
-        replyArea.style.display = 'none';
-      } else {
-        replyArea.style.display = 'block';
-      }
-      postModal.style.display = 'flex';
-      postModal.setAttribute('aria-hidden', 'false');
-      replyText.value = '';
-    }
-
-    function renderReplies(post){
-      repliesList.innerHTML = '';
-      if(!post.replies || post.replies.length === 0){
-        repliesList.innerHTML = '<p style="color:#666">No replies yet — be the first to reply.</p>';
-        return;
-      }
-      // show replies in chronological order (oldest first)
-      post.replies.slice().sort((a,b) => a.date - b.date).forEach(r => {
-        const d = document.createElement('div');
-        d.className = 'reply';
-        d.innerHTML = `<div class="reply-author">${escapeHtml(r.author)}</div><div class="reply-text">${escapeHtml(r.text)}</div><div style="font-size:0.8rem;color:#777;margin-top:6px">${new Date(r.date).toLocaleString()}</div>`;
-        repliesList.appendChild(d);
-      });
-    }
-
-    // send reply (only for opened post)
-    replySendBtn.addEventListener('click', () => {
-      if(!loggedIn){
-        Swal.fire({ icon:'warning', title:'Login required', text:'Please log in to reply.' });
-        return;
-      }
-      const text = replyText.value.trim();
-      if(!text) { Swal.fire({ icon:'warning', title:'Empty reply', text:'Please write something to reply.'}); return; }
-      const post = posts.find(p => p.id === currentOpenPostId);
-      if(!post) return;
-      post.replies.push({ author: localStorage.getItem('username') || currentUsername, text, date: new Date() });
-      renderReplies(post);
-      // also update underlying posts list UI if needed (no change to title but good)
-      renderPosts();
-      replyText.value = '';
-      Swal.fire({ icon:'success', title:'Reply posted', timer:1200, showConfirmButton:false });
+  if(v){
+    await addDoc(collection(db,"posts"),{
+      title:v.t,
+      text:v.c,
+      topic:v.tp,
+      author:localStorage.getItem("username"),
+      authorUid:currentUser.uid,
+      createdAt:serverTimestamp(),
+      likeCount:0
     });
+    loadPosts();
+    Swal.fire({icon:'success',title:'Posted',timer:1200,showConfirmButton:false});
+  }
+};
 
-    // close modal
-    closeModal.addEventListener('click', () => {
-      postModal.style.display = 'none';
-      postModal.setAttribute('aria-hidden','true');
-      currentOpenPostId = null;
-    });
-    // close on background click
-    postModal.addEventListener('click', (e) => { if(e.target === postModal){ postModal.style.display='none'; currentOpenPostId=null; }});
+/* ================= REPLY ================= */
+replySendBtn.onclick=async()=>{
+  if(!currentUser) return;
+  const txt=replyText.value.trim();
+  if(!txt) return;
 
-    // Add post button click: show modal inputs (requires logged in)
-    addPostBtn.addEventListener('click', async () => {
-      if(!loggedIn){
-        Swal.fire({ icon:'warning', title:'Login required', text:'You must be logged in to create a post.'});
-        return;
-      }
-      // Use SweetAlert2 with custom inputs: title, topic, content
-      const { value: formValues } = await Swal.fire({
-        title: 'Create a new post',
-        html:
-          `<input id="swalTitle" class="swal2-input" placeholder="Heading (required)">` +
-          `<select id="swalTopic" class="swal2-select" style="margin-top:8px; padding:8px; border-radius:6px;">` +
-            `<option>Programming & Coding</option><option>AI & Machine Learning</option><option>Cybersecurity & Hacking</option>` +
-            `<option>Computer Hardware</option><option>Web Development</option><option>Networking</option>` +
-            `<option>Operating Systems</option><option>Databases</option><option>Cloud Computing</option>` +
-            `<option>DevOps</option><option>PC Troubleshooting</option><option>Software Engineering</option>` +
-            `<option>Robotics</option><option>Data Science</option><option>App Development</option>` +
-            `<option>Internet of Things (IoT)</option><option>AI Ethics</option><option>Math for Computing</option>` +
-            `<option>History of Computers</option><option>Career & Certifications</option><option>Other</option>` +
-          `</select>` +
-          `<textarea id="swalContent" class="swal2-textarea" placeholder="Write your post (required)"></textarea>`,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonText: 'Post',
-        confirmButtonColor: '#00aaff',
-        preConfirm: () => {
-          const title = document.getElementById('swalTitle').value.trim();
-          const topic = document.getElementById('swalTopic').value;
-          const content = document.getElementById('swalContent').value.trim();
-          if(!title) { Swal.showValidationMessage('Heading is required'); return false; }
-          if(!content) { Swal.showValidationMessage('Content is required'); return false; }
-          return { title, topic, content };
-        }
-      });
+  await addDoc(collection(db,"posts",currentOpenPostId,"replies"),{
+    text:txt,
+    author:localStorage.getItem("username"),
+    authorUid:currentUser.uid,
+    createdAt:serverTimestamp()
+  });
 
-      if(formValues){
-        const newPost = {
-          id: genId(),
-          title: formValues.title,
-          text: formValues.content,
-          topic: formValues.topic,
-          author: localStorage.getItem('username') || currentUsername,
-          date: new Date(),
-          replies: []
-        };
-        posts.push(newPost);
-        renderPosts();
-        Swal.fire({ icon:'success', title:'Posted', text:'Your post is live.', timer:1200, showConfirmButton:false });
-      }
-    });
+  replyText.value='';
+  openPost(currentOpenPostId,{title:modalTitle.textContent,text:modalBody.textContent,topic:""});
+};
 
-    // Filter logic
-    topicFilter.addEventListener('change', () => renderPosts());
+/* ================= FILTER ================= */
+topicFilter.onchange=()=>loadPosts();
 
-    // initial render
-    renderPosts();
+/* ================= MODAL CLOSE ================= */
+closeModal.onclick=()=>postModal.style.display="none";
+postModal.onclick=e=>{ if(e.target===postModal) postModal.style.display="none"; };
 
-    // helper: disable add button if not logged in (keeps visual frozen)
-    if(!loggedIn) addPostBtn.classList.add('frozen');
+</script>
 
-    // END SCRIPT
-  </script>
 </body>
 </html>
